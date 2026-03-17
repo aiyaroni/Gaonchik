@@ -3,86 +3,131 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>yaroni studio — כלי לימוד</title>
+  <title>גאונצ'יק — כלי לימוד עם שופי</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="css/core.css">
   <style>
+    /* ── Hub page: subject cards ── */
     .hub-card {
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      text-align: center;
       gap: .5rem;
       background: #fff;
-      border: 2px solid transparent;
-      border-radius: 1.5rem;
-      padding: 2.5rem 2rem;
-      box-shadow: var(--shadow);
-      transition: transform .2s, box-shadow .2s, border-color .2s;
+      border: 2px solid #e5e7eb;
+      border-radius: 20px;
+      padding: 2rem 1.5rem 1.75rem;
+      box-shadow: 0 4px 0 rgba(0,0,0,.08), 0 8px 24px rgba(0,0,0,.05);
+      transition: transform .18s, box-shadow .18s, border-color .18s;
       cursor: pointer;
       text-decoration: none;
       color: inherit;
-      min-height: 200px;
+      -webkit-tap-highlight-color: transparent;
     }
-    .hub-card:hover  { transform: translateY(-4px); box-shadow: 0 18px 40px rgba(0,0,0,.16); border-color: #c4b5fd; }
+    .hub-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 0 rgba(0,0,0,.10), 0 18px 36px rgba(0,0,0,.09);
+      border-color: #c4b5fd;
+    }
     .hub-card:focus  { outline: 3px solid #818cf8; outline-offset: 3px; }
-    .hub-card:active { transform: scale(.97); }
-    .hub-card .card-emoji { font-size: 3.5rem; margin-bottom: .5rem; }
-    .hub-card .card-title { font-size: 1.75rem; font-weight: 800; color: #1f2937; }
-    .hub-card .card-desc  { font-size: 1rem; color: #6b7280; font-weight: 500; }
+    .hub-card:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.08); }
+
+    .hub-card .card-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.4rem;
+      margin-bottom: .5rem;
+    }
+    .hub-card .card-title { font-size: 1.6rem; font-weight: 800; color: #1f2937; }
+    .hub-card .card-desc  { font-size: .95rem; color: #6b7280; font-weight: 500; line-height: 1.4; }
     .hub-badge {
       display: inline-block;
-      padding: .2rem .65rem;
+      padding: .3rem .85rem;
       border-radius: 9999px;
       font-size: .8rem;
       font-weight: 700;
       margin-top: .35rem;
     }
+
+    /* ── Hero owl ── */
+    .hero-owl {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      background: #fef9c3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      margin: 0 auto 1rem;
+      box-shadow: 0 4px 0 #fde047, 0 8px 20px rgba(0,0,0,.08);
+    }
   </style>
 </head>
-<body class="bg-gradient-to-br from-blue-100 via-purple-50 to-green-100 min-h-screen flex flex-col items-center justify-center p-6 has-ctx-bar">
 
-  <!-- Context bar (static on hub page) -->
+<body class="bg-gradient-to-br from-blue-100 via-purple-50 to-green-100 min-h-screen flex flex-col items-center justify-center p-5 has-ctx-bar">
+
+  <!-- Navbar -->
   <nav id="contextBar" aria-label="ניווט ראשי">
-    <a href="index.html" class="ctx-btn ctx-btn-active" aria-label="דף הבית">🏠</a>
+    <a href="index.html" class="ctx-btn ctx-btn-active" aria-label="דף הבית">
+      <span aria-hidden="true">🏠</span> בית
+    </a>
     <span class="ctx-sep" aria-hidden="true">|</span>
-    <a href="misparonchikV2.html" class="ctx-btn"><span aria-hidden="true">🔢</span> מספרונצ'יק</a>
+    <a href="misparonchikV2.html" class="ctx-btn">
+      <span aria-hidden="true">🔢</span> מספרונצ'יק
+    </a>
     <span class="ctx-sep" aria-hidden="true">|</span>
-    <a href="madaonchik.html" class="ctx-btn"><span aria-hidden="true">🔬</span> מדעונצ'יק</a>
+    <a href="madaonchik.html" class="ctx-btn">
+      <span aria-hidden="true">🔬</span> מדעונצ'יק
+    </a>
   </nav>
 
-  <main class="text-center max-w-3xl w-full">
-    <!-- Logo / Header -->
-    <div class="mb-10">
-      <div class="text-7xl mb-4">🦉</div>
-      <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-2">כלי הלימוד של שופי</h1>
-      <p class="text-xl text-gray-600 font-medium">בחרו את הנושא שרוצים לתרגל</p>
+  <!-- Main shell: max 480px, centered -->
+  <main class="app-shell text-center w-full">
+
+    <!-- Hero -->
+    <div class="mb-8">
+      <div class="hero-owl" role="img" aria-label="שופי הינשוף">🦉</div>
+      <h1 class="text-3xl font-extrabold text-gray-900 mb-2 leading-tight">
+        כלי הלימוד של שופי
+      </h1>
+      <p class="text-lg text-gray-500 font-medium">בחרו נושא ונתחיל לשחק!</p>
     </div>
 
     <!-- Subject Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10">
+    <div class="flex flex-col gap-4 mb-8">
 
       <a href="misparonchikV2.html" class="hub-card" aria-label="מספרונצ'יק — משחק חשבון לימודי">
-        <div class="card-emoji">🔢</div>
+        <div class="card-icon bg-purple-100">🔢</div>
         <div class="card-title">מספרונצ'יק</div>
-        <div class="card-desc">תרגולי חשבון עם שופי</div>
-        <span class="hub-badge bg-purple-100 text-purple-700">חיבור · חיסור · כפל · חילוק</span>
+        <div class="card-desc">תרגולי חשבון מהנים עם שופי</div>
+        <span class="hub-badge bg-purple-100 text-purple-700">
+          חיבור · חיסור · כפל · חילוק
+        </span>
       </a>
 
       <a href="madaonchik.html" class="hub-card" aria-label="מדעונצ'יק — חידון מדע ופיזיקה">
-        <div class="card-emoji">🔬</div>
+        <div class="card-icon bg-green-100">🔬</div>
         <div class="card-title">מדעונצ'יק</div>
-        <div class="card-desc">חידוני מדע עם שופי</div>
-        <span class="hub-badge bg-green-100 text-green-700">פיזיקה · חומר · חלל · אנרגיה</span>
+        <div class="card-desc">חידוני מדע ופיזיקה עם שופי</div>
+        <span class="hub-badge bg-green-100 text-green-700">
+          פיזיקה · חומר · חלל · אנרגיה
+        </span>
       </a>
 
     </div>
 
     <!-- Footer -->
     <footer class="site-signature">
-      <div>© 2025 yaroni studio - תוכן חזק, עובד חכם ומבוסס על בינה</div>
+      <div>© 2025 yaroni studio</div>
       <a href="mailto:hello@yaronistudio.com" dir="ltr">hello@yaronistudio.com</a>
     </footer>
+
   </main>
 
 </body>

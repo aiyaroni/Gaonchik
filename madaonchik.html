@@ -13,6 +13,41 @@
     .pulse { animation: pulse 1.6s ease-in-out infinite; }
     @keyframes pulse { 0%,100%{ transform:scale(1) } 50%{ transform:scale(1.05) } }
 
+    /* Screen icon bubbles */
+    .screen-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.1rem;
+      margin: 0 auto 1rem;
+    }
+
+    /* Bottom Feedback Sheet */
+    .feedback-sheet {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      max-width: 480px;
+      margin-inline: auto;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      border-radius: 24px 24px 0 0;
+      padding: 1.5rem 1.5rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
+      box-shadow: 0 -4px 32px rgba(0,0,0,.12);
+    }
+    .feedback-sheet.sheet-open  { transform: translateY(0); }
+    .feedback-sheet.correct { background: #dcfce7; border-top: 3px solid #22c55e; }
+    .feedback-sheet.wrong   { background: #fef2f2; border-top: 3px solid #ef4444; }
+    .sheet-inner { display: flex; flex-direction: column; align-items: center; text-align: center; gap: .5rem; }
+    .sheet-icon  { font-size: 2rem; }
+    .sheet-msg   { font-size: 1.25rem; font-weight: 800; color: #1f2937; }
+    .sheet-hint  { font-size: 1rem; color: #374151; font-weight: 600; line-height: 1.5; max-width: 360px; }
+
     /* Topics collapse: show 4 by default */
     #topicsGrid.topics-collapsed > :nth-child(n+5) { display: none; }
     #topicsWrapper { position: relative; }
@@ -34,12 +69,15 @@
   </div>
 
   <!-- Welcome -->
-  <div id="welcomeScreen" class="flex flex-col items-center justify-center min-h-screen p-6">
-    <div class="text-center bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
-      <img src="/assets/shofi.gif" alt="שופי הינשוף" class="w-20 h-20 mx-auto mb-4 rounded-xl" onerror="this.outerHTML='<div class=&quot;text-6xl mb-4 pulse&quot;>🦉</div>'">
-      <h1 id="welcomeTitle" tabindex="-1" class="no-focus-outline text-4xl font-extrabold text-purple-600 mb-3">מדעונצ'יק</h1>
-      <p class="text-2xl text-gray-700 mb-8">שופי הינשוף מחכה לכם לחידון מדע כיפי</p>
-      <button type="button" id="startBtn" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-4 rounded-full text-xl font-bold hover:from-purple-600 hover:to-pink-600 transform hover:scale-105 transition-all duration-200 shadow-lg">התחל</button>
+  <div id="welcomeScreen" class="flex flex-col items-center justify-center min-h-screen p-5">
+    <div class="text-center bg-white rounded-3xl shadow-2xl p-8 app-shell w-full">
+      <img src="/assets/shofi.gif" alt="שופי הינשוף"
+           class="w-20 h-20 mx-auto mb-4 rounded-full"
+           style="background:#fef9c3;box-shadow:0 4px 0 #fde047,0 8px 20px rgba(0,0,0,.08)"
+           onerror="this.outerHTML='<div class=&quot;icon-bubble bg-yellow-100 pulse&quot; style=&quot;width:88px;height:88px;font-size:2.8rem;margin-bottom:1rem;box-shadow:0 4px 0 #fde047,0 8px 20px rgba(0,0,0,.08)&quot; role=&quot;img&quot; aria-label=&quot;שופי הינשוף&quot;>🦉</div>'">
+      <h1 id="welcomeTitle" tabindex="-1" class="no-focus-outline text-4xl font-extrabold text-purple-600 mb-2">מדעונצ'יק</h1>
+      <p class="text-lg text-gray-600 mb-8">שופי מחכה לכם — בואו נשחק!</p>
+      <button type="button" id="startBtn" class="btn-duo btn-duo-purple mt-2">התחל משחק</button>
     </div>
     <footer class="site-signature px-4">
       <div>© 2025 yaroni studio - תוכן חזק, עובד חכם ומבוסס על בינה</div>
@@ -48,16 +86,16 @@
   </div>
 
   <!-- Name -->
-  <div id="nameScreen" class="hidden flex flex-col items-center justify-center min-h-screen p-6">
-    <form id="nameForm" class="text-center bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
-      <div class="text-5xl mb-4">👋</div>
+  <div id="nameScreen" class="hidden flex flex-col items-center justify-center min-h-screen p-5">
+    <form id="nameForm" class="text-center bg-white rounded-3xl shadow-2xl p-8 app-shell w-full">
+      <div class="screen-icon bg-green-100">🥳</div>
       <h2 id="nameTitle" tabindex="-1" class="no-focus-outline text-3xl font-extrabold text-blue-600 mb-2">איך קוראים לך?</h2>
       <p id="nameSubtitle" class="text-gray-600 mb-4 hidden"></p>
       <input type="text" id="playerName" name="playerName" required placeholder="הכניסו את שמכם כאן" class="w-full p-4 text-xl border-2 border-gray-300 rounded-xl mb-3 text-center focus:border-blue-500 focus:outline-none">
       <div class="text-center mb-6">
         <button type="button" id="profileOrSwitchBtn" class="link-cta">החלפת משתמש - אזור אישי</button>
       </div>
-      <button type="submit" class="bg-gradient-to-r from-blue-500 to-green-500 text-white px-8 py-4 rounded-full text-xl font-bold hover:from-blue-600 hover:to-green-600 transform hover:scale-105 transition-all duration-200 shadow-lg">המשך</button>
+      <button type="submit" class="btn-duo btn-duo-blue">המשך</button>
     </form>
   </div>
 
@@ -74,9 +112,9 @@
   </div>
 
   <!-- Gender -->
-  <div id="genderScreen" class="hidden flex flex-col items-center justify-center min-h-screen p-6">
-    <div class="text-center bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
-      <div class="text-5xl mb-4">👤</div>
+  <div id="genderScreen" class="hidden flex flex-col items-center justify-center min-h-screen p-5">
+    <div class="text-center bg-white rounded-3xl shadow-2xl p-8 app-shell w-full">
+      <div class="screen-icon bg-yellow-100">🦉</div>
       <h2 id="genderTitle" tabindex="-1" class="no-focus-outline text-3xl font-extrabold text-purple-600 mb-6">אתה ילד או ילדה?</h2>
       <div class="grid grid-cols-2 gap-6">
         <button type="button" id="genderBoyBtn" class="choice-card py-8" data-gender="m">
@@ -94,7 +132,7 @@
   <!-- Topics (merged groups) -->
   <div id="topicsScreen" class="hidden flex flex-col items-center justify-center min-h-screen p-6">
     <div class="text-center bg-white rounded-3xl shadow-2xl p-8 max-w-4xl w-full">
-      <div class="text-5xl mb-4">📚</div>
+      <div class="screen-icon bg-green-100">📚</div>
       <h2 id="topicsTitle" tabindex="-1" class="no-focus-outline text-3xl md:text-4xl font-extrabold text-green-600 mb-2 leading-tight">איזה נושא מעניין אתכם היום?</h2>
       <p class="subhead mb-6">אפשר לבחור נושא אחד או יותר</p>
 
@@ -105,28 +143,28 @@
 
       <div class="flex items-center justify-center gap-3 flex-wrap mt-2">
         <button id="topicsMore" type="button" class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 font-bold hidden" aria-expanded="false">הצג עוד</button>
-        <button id="topicsNext" class="bg-gradient-to-r from-green-500 to-blue-500 text-white px-8 py-4 rounded-full text-xl font-bold shadow-lg disabled:opacity-50" disabled aria-disabled="true">המשך</button>
+        <button id="topicsNext" class="btn-duo btn-duo-green" disabled aria-disabled="true">המשך</button>
       </div>
     </div>
   </div>
 
   <!-- Program -->
-  <div id="programScreen" class="hidden flex flex-col items-center justify-center min-h-screen p-6">
-    <div class="text-center bg-white rounded-3xl shadow-2xl p-8 max-w-xl w-full">
-      <div class="text-5xl mb-4">🎯</div>
+  <div id="programScreen" class="hidden flex flex-col items-center justify-center min-h-screen p-5">
+    <div class="text-center bg-white rounded-3xl shadow-2xl p-8 app-shell w-full">
+      <div class="screen-icon bg-indigo-100">🎯</div>
       <h2 class="text-3xl md:text-4xl font-extrabold text-indigo-600 mb-2">איזו תכנית לימוד מתאימה?</h2>
       <p class="subhead mb-6">בחרו את הכיתה שלכם</p>
       <div id="programGrid" class="grid grid-cols-2 gap-4 mb-6"></div>
       <div class="flex items-center justify-center gap-3 flex-wrap">
-        <button id="programNext" class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-8 py-4 rounded-full text-xl font-bold shadow-lg disabled:opacity-50" disabled aria-disabled="true">המשך</button>
+        <button id="programNext" class="btn-duo btn-duo-purple" disabled aria-disabled="true">המשך</button>
       </div>
     </div>
   </div>
 
   <!-- Settings -->
-  <div id="settingsScreen" class="hidden flex flex-col items-center justify-center min-h-screen p-6">
-    <div class="text-center bg-white rounded-3xl shadow-2xl p-8 max-w-xl w-full">
-      <div class="text-5xl mb-4">⚙️</div>
+  <div id="settingsScreen" class="hidden flex flex-col items-center justify-center min-h-screen p-5">
+    <div class="text-center bg-white rounded-3xl shadow-2xl p-8 app-shell w-full">
+      <div class="screen-icon bg-emerald-100">⚙️</div>
       <h2 class="text-3xl md:text-4xl font-extrabold text-emerald-600 mb-2">מספר השאלות במשחק</h2>
 
       <div class="mb-6">
@@ -145,35 +183,35 @@
       </div>
 
       <div class="flex items-center justify-center gap-3 flex-wrap">
-        <button id="settingsNext" class="bg-gradient-to-r from-green-500 to-blue-500 text-white px-8 py-4 rounded-full text-xl font-bold shadow-lg disabled:opacity-50" disabled aria-disabled="true">התחל</button>
+        <button id="settingsNext" class="btn-duo btn-duo-green" disabled aria-disabled="true">התחל משחק</button>
       </div>
     </div>
   </div>
 
   <!-- Game -->
   <div id="gameScreen" class="hidden min-h-screen p-4">
-    <div class="bg-white rounded-2xl shadow-lg p-4 mb-6 mx-auto max-w-4xl">
+    <div class="bg-white rounded-2xl shadow-lg p-4 mb-6 mx-auto app-shell">
       <div class="flex justify-between items-center mb-4 gap-3 flex-wrap">
         <div class="text-2xl font-extrabold text-purple-600">שאלה <span id="currentQuestion" class="ltr">1</span> מתוך <span id="totalQuestions" class="ltr">6</span></div>
         <div class="text-xl text-gray-700">שלום <span id="gamePlayerName" class="font-bold"></span> - בהצלחה</div>
       </div>
-      <div class="w-full bg-gray-200 rounded-full h-4" aria-hidden="true">
-        <div id="progressBar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" class="bg-gradient-to-r from-green-400 to-blue-500 h-4 rounded-full" style="width: 0%"></div>
+      <div class="w-full bg-gray-200 rounded-full h-2" aria-hidden="true">
+        <div id="progressBar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" class="h-2 rounded-full" style="width: 0%; background: #22c55e;"></div>
       </div>
       <div id="statusMsg" class="sr-only" aria-live="polite"></div>
     </div>
 
-    <div class="bg-white rounded-3xl shadow-2xl p-6 mb-6 mx-auto max-w-lg text-center">
-      <img src="/assets/shofi.gif" alt="שופי הינשוף" class="w-16 h-16 mx-auto mb-4 rounded-xl" onerror="this.outerHTML='<div class=&quot;text-5xl mb-4 pulse&quot;>🦉</div>'">
+    <div class="bg-white rounded-3xl shadow-2xl p-6 mb-6 mx-auto app-shell text-center">
+      <div id="shofyEl" class="icon-bubble bg-yellow-100 mx-auto mb-4" role="img" aria-label="שופי הינשוף">🦉</div>
       <div id="questionText" tabindex="-1" class="no-focus-outline text-3xl font-extrabold text-gray-900 mb-5">טוען שאלה...</div>
       <div class="subhead text-gray-700">בחרו את התשובה הנכונה</div>
     </div>
 
-    <div id="answersGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto px-4 mb-6"></div>
+    <div id="answersGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-4 app-shell mx-auto px-4 mb-6"></div>
 
-    <div class="text-center space-y-4 pb-10">
-      <button id="confirmButton" type="button" class="bg-gradient-to-r from-green-500 to-blue-500 text-white px-8 py-4 rounded-full text-xl font-bold transition-all duration-200 shadow-lg" disabled aria-disabled="true">אשר תשובה</button>
-      <button type="button" id="restartBtn" class="bg-gradient-to-r from-gray-500 to-gray-600 text-white px-6 py-3 rounded-full text-lg font-bold hover:scale-105 transition-all duration-200 shadow-lg">התחל מחדש</button>
+    <div class="text-center space-y-4 pb-10 app-shell mx-auto px-4">
+      <button id="confirmButton" type="button" class="btn-duo btn-duo-green confirm-button" disabled aria-disabled="true">אשר תשובה</button>
+      <button type="button" id="restartBtn" class="btn-duo btn-duo-gray">התחל מחדש</button>
     </div>
 
     <!-- End-of-set Feedback -->
@@ -181,15 +219,25 @@
       <div role="dialog" aria-modal="true" aria-labelledby="feedbackText" class="bg-white rounded-3xl p-8 text-center max-w-md mx-4">
         <div id="feedbackIcon" class="text-8xl mb-4">🎉</div>
         <div id="feedbackText" aria-live="polite" class="text-2xl font-extrabold mb-6">סיימנו את הסט - כל הכבוד</div>
-        <button id="nextButton" type="button" class="bg-gradient-to-r from-green-500 to-blue-500 text-white px-8 py-4 rounded-full text-xl font-bold hover:scale-105 transition-all duration-200 shadow-lg">לסיכום התוצאות</button>
+        <button id="nextButton" type="button" class="btn-duo btn-duo-green">לסיכום התוצאות</button>
       </div>
     </div>
   </div>
 
+  <!-- Per-question Feedback Sheet -->
+  <div id="feedbackSheet" class="feedback-sheet" role="complementary" aria-live="polite" aria-atomic="true">
+    <div class="sheet-inner">
+      <div id="sheetIcon" class="sheet-icon"></div>
+      <div id="sheetMessage" class="sheet-msg"></div>
+      <div id="sheetHint" class="sheet-hint hidden"></div>
+      <button id="sheetContinueBtn" type="button" class="btn-duo btn-duo-green mt-4" style="max-width:360px">המשך</button>
+    </div>
+  </div>
+
   <!-- Results -->
-  <div id="resultsScreen" class="hidden flex flex-col items-center justify-center min-h-screen p-6">
-    <div class="text-center bg-white rounded-3xl shadow-2xl p-8 max-w-lg w-full relative overflow-hidden">
-      <div class="text-8xl mb-4">🏆</div>
+  <div id="resultsScreen" class="hidden flex flex-col items-center justify-center min-h-screen p-5">
+    <div class="text-center bg-white rounded-3xl shadow-2xl p-8 app-shell w-full relative overflow-hidden">
+      <div class="screen-icon bg-yellow-100" style="width:88px;height:88px;font-size:2.8rem">🏆</div>
       <h2 id="resultsTitle" tabindex="-1" class="no-focus-outline text-3xl font-extrabold text-green-600 mb-4">כל הכבוד</h2>
       <div class="mb-6">
         <div class="flex justify-between items-center mb-2">
@@ -213,10 +261,10 @@
         <div class="mb-4">זמן ממוצע: <span id="averageTime" class="font-extrabold text-blue-600 ltr">0</span> שניות</div>
       </div>
       <div class="flex flex-col gap-4">
-        <button id="learnBtn"              type="button" class="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-8 py-4 rounded-full text-xl font-bold hover:scale-105 transition-all duration-200 shadow-lg">ללמוד מהטעויות</button>
-        <button id="retryBtn"              type="button" class="bg-gradient-to-r from-green-500 to-blue-500 text-white px-8 py-4 rounded-full text-xl font-bold hover:scale-105 transition-all duration-200 shadow-lg">לחזור על התרגיל מחדש</button>
-        <button id="altBtn"                type="button" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-4 rounded-full text-xl font-bold hover:scale-105 transition-all duration-200 shadow-lg">בא לי נושא אחר</button>
-        <button id="profileFromResultsBtn" type="button" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-full text-xl font-bold hover:scale-105 transition-all duration-200 shadow-lg">אזור אישי</button>
+        <button id="learnBtn"              type="button" class="btn-duo btn-duo-green">ללמוד מהטעויות</button>
+        <button id="retryBtn"              type="button" class="btn-duo btn-duo-blue">לחזור על התרגיל מחדש</button>
+        <button id="altBtn"                type="button" class="btn-duo btn-duo-purple">בא לי נושא אחר</button>
+        <button id="profileFromResultsBtn" type="button" class="btn-duo btn-duo-gray">אזור אישי</button>
       </div>
     </div>
     <footer class="site-signature px-4">
@@ -231,8 +279,8 @@
       <h2 class="text-3xl font-extrabold text-amber-600 mb-4 text-center">לומדים מהטעויות</h2>
       <div id="mistakesList" class="space-y-3 mb-6"></div>
       <div class="flex gap-3 justify-center">
-        <button id="backToResultsBtn"    type="button" class="px-6 py-3 rounded-full bg-gray-100 hover:bg-gray-200 font-bold">חזרה לסיכום</button>
-        <button id="fromMistakesStartBtn" type="button" class="px-6 py-3 rounded-full bg-green-600 text-white font-bold hover:bg-green-700">התחל משחק חדש</button>
+        <button id="backToResultsBtn"    type="button" class="btn-duo btn-duo-gray" style="max-width:180px">חזרה לסיכום</button>
+        <button id="fromMistakesStartBtn" type="button" class="btn-duo btn-duo-green" style="max-width:220px">התחל משחק חדש</button>
       </div>
     </div>
   </div>
@@ -292,10 +340,10 @@
 
     /* ========= Topic Groups & Programs ========= */
     const TopicGroups = [
-      {key:'mech',          label:'תנועה, כוח ומגנטים',         emoji:'🏃‍♂️', topics:['motion','gravity','magnet']},
-      {key:'waves',         label:'אור וקול',                    emoji:'💡',  topics:['light','sound']},
-      {key:'matter_energy', label:'חומר, אנרגיה ומדידות',        emoji:'🧪',  topics:['matter','energy','measure','electric']},
-      {key:'space',         label:'כדור הארץ והחלל',             emoji:'🪐',  topics:['space']},
+      {key:'mech',          label:'איך דברים זזים?',             emoji:'🏃',  topics:['motion','gravity','magnet']},
+      {key:'waves',         label:'קסם האור והצלילים',           emoji:'💡',  topics:['light','sound']},
+      {key:'matter_energy', label:'מה יש בתוך הדברים?',          emoji:'🧪',  topics:['matter','energy','measure','electric']},
+      {key:'space',         label:'כוכבים ועולמות רחוקים',       emoji:'🪐',  topics:['space']},
     ];
 
     const Programs = [
@@ -458,7 +506,7 @@
       $('#totalQuestions').textContent=String(totalQuestions);
       $('#gamePlayerName').textContent=playerName;
       currentQuestionIndex=0; correctCount=0; selectedAnswer=null; totalTime=0;
-      showScreens(SCREENS,'gameScreen'); showQuestion(); focusTop('#questionText'); updateStatus('יצאנו לדרך - בחרו תשובה ואז אשרו');
+      showScreens(SCREENS,'gameScreen'); setShofyMood('neutral'); showQuestion(); focusTop('#questionText'); updateStatus('יצאנו לדרך - בחרו תשובה ואז אשרו');
     }
 
     function showQuestion(){
@@ -495,22 +543,65 @@
     function enableConfirm(){ const btn=$('#confirmButton'); btn.disabled=false; btn.removeAttribute('disabled'); btn.setAttribute('aria-disabled','false'); }
     function disableConfirm(){ const btn=$('#confirmButton'); btn.disabled=true; btn.setAttribute('disabled',''); btn.setAttribute('aria-disabled','true'); }
 
+    /* ========= Shoffy Moods ========= */
+    const SHOFY = {
+      neutral:  { emoji: '🦉', bg: 'bg-yellow-100' },
+      happy:    { emoji: '🥳', bg: 'bg-green-100'  },
+      thinking: { emoji: '🤔', bg: 'bg-orange-100' }
+    };
+    function setShofyMood(mood) {
+      const el = $('#shofyEl'); if(!el) return;
+      const m = SHOFY[mood] || SHOFY.neutral;
+      el.textContent = m.emoji;
+      el.className = `icon-bubble ${m.bg} mx-auto mb-4`;
+    }
+
+    /* ========= Feedback Sheet ========= */
+    function resolveText(field){ return typeof field === 'function' ? field() : (field || ''); }
+
+    function showFeedbackSheet(isCorrect, hint) {
+      const sheet = $('#feedbackSheet');
+      sheet.classList.remove('correct','wrong');
+      sheet.classList.add(isCorrect ? 'correct' : 'wrong');
+      $('#sheetIcon').textContent = isCorrect ? '✅' : '❌';
+      $('#sheetMessage').textContent = isCorrect ? 'כל הכבוד! תשובה נכונה' : 'כמעט! ננסה שוב בפעם הבאה';
+      const hintText = resolveText(hint);
+      const hintEl = $('#sheetHint');
+      if(hintText && !isCorrect){ hintEl.textContent = hintText; hintEl.classList.remove('hidden'); }
+      else{ hintEl.classList.add('hidden'); }
+      $('#sheetContinueBtn').textContent = isCorrect ? 'המשך' : 'הבנתי';
+      sheet.classList.add('sheet-open');
+    }
+
+    function hideFeedbackSheet(){ $('#feedbackSheet').classList.remove('sheet-open'); }
+
     $('#confirmButton').addEventListener('click',()=>{
       if(selectedAnswer===null) return;
       const q=questions[currentQuestionIndex];
       const end=Date.now(); totalTime+=Math.max(0,(end-startTime)/1000);
-      const correctIndex=q.correct;
-      if(selectedAnswer===correctIndex){
+      const isCorrect = selectedAnswer===q.correct;
+      if(isCorrect){
         correctCount++; playSuccessSound(); updateStatus('כל הכבוד - ממשיכים');
-      }else{
+        setShofyMood('happy');
+      } else {
         playErrorSound(); updateStatus('כמעט! ממשיכים לשאלה הבאה');
+        setShofyMood('thinking');
         wrongAnswers.push({ q:normalizeQuestionMark(q.q), chosen:q.choices[selectedAnswer], correct:q.choices[q.correct], conceptId:q.conceptId, topic:q.topic, hint:q.hint||'' });
       }
       const answered=Math.min(currentQuestionIndex+1,totalQuestions);
       const pct=Math.round((answered/totalQuestions)*100);
       const pb=$('#progressBar'); pb.style.width=pct+'%'; pb.setAttribute('aria-valuenow',String(pct));
-      if(currentQuestionIndex===totalQuestions-1){ showResultsWithModal(); }
-      else{ currentQuestionIndex++; showQuestion(); }
+      disableConfirm();
+      showFeedbackSheet(isCorrect, q.hint);
+    });
+
+    $('#sheetContinueBtn')?.addEventListener('click',()=>{
+      hideFeedbackSheet();
+      setTimeout(()=>{
+        setShofyMood('neutral');
+        if(currentQuestionIndex===totalQuestions-1){ showResultsWithModal(); }
+        else{ currentQuestionIndex++; showQuestion(); }
+      }, 500);
     });
 
     function showResultsWithModal(){
