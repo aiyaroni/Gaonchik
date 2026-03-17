@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>מספרונצ'יק - משחק חשבון לימודי</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="core.css">
+  <style>
+    /* === misparonchik-specific styles === */
+
+    /* Owl animation */
+    .owl-blink { animation: blink 2s infinite; }
+    @keyframes blink { 0%,90%,100%{ transform:scaleY(1) } 95%{ transform:scaleY(.1) } }
+    @media (prefers-reduced-motion: reduce) { .owl-blink { animation: none; } }
+
+    /* Answer-item: color accents (4 slots) */
+    .answer-item::before { content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; background:var(--tint,transparent); opacity:.08; }
+    .answer-item .accent { display:none; position:absolute; right:0; top:0; bottom:0; width:8px; border-radius:0 1rem 1rem 0; opacity:.55; background:var(--tint); pointer-events:none; }
+    .answer-item[data-idx="0"] { --tint:#f87171; }
+    .answer-item[data-idx="1"] { --tint:#60a5fa; }
+    .answer-item[data-idx="2"] { --tint:#4ade80; }
+    .answer-item[data-idx="3"] { --tint:#facc15; }
+    .answer-item.selected .accent { display:block; }
+
+    /* Choice-card: color accents */
+    .choice-card .accent { display:none; position:absolute; right:0; top:0; bottom:0; width:8px; border-radius:0 1.25rem 1.25rem 0; opacity:.55; pointer-events:none; }
+    .choice-card[data-tint="green"]  { --tint:#22c55e; }
+    .choice-card[data-tint="blue"]   { --tint:#3b82f6; }
+    .choice-card[data-tint="purple"] { --tint:#a855f7; }
+    .choice-card[data-tint="orange"] { --tint:#f59e0b; }
+    .choice-card[data-tint="pink"]   { --tint:#ec4899; }
+    .choice-card.selected .accent { display:block; background:var(--tint,#3b82f6); }
+    .op-btn .emoji    { font-size:1.8rem; }
+    .op-btn .text-xl  { font-size:1.1rem; }
+
+    /* Audio toggle span-based icons */
+    #audioToggle[aria-pressed="true"]  .muted   { display:inline; }
+    #audioToggle[aria-pressed="true"]  .unmuted { display:none;   }
+    #audioToggle[aria-pressed="false"] .muted   { display:none;   }
+    #audioToggle[aria-pressed="false"] .unmuted { display:inline; }
+
+    /* Curriculum overflow collapse */
+    #curriculumWrapper { position:relative; }
+    .curriculum-collapsed { max-height:min(45vh, 360px); overflow:hidden; }
+    #curriculumFade {
+      position:absolute; inset-inline:0; bottom:0; height:64px;
+      background:linear-gradient(to top, rgba(255,255,255,1), rgba(255,255,255,0));
+      pointer-events:none;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-blue-100 via-purple-50 to-green-100 min-h-screen">
+
+  <!-- Floating controls -->
+  <div id="floatingControls" aria-label="בקרות מהירות">
+    <button id="audioToggle" type="button" aria-label="החלפת מצב צליל" aria-pressed="false" title="הצליל פעיל">
+      <span class="unmuted" aria-hidden="true">🔊</span>
+      <span class="muted" aria-hidden="true">🔇</span>
+    </button>
+    <button id="profileBtn" type="button" aria-label="אזור אישי" title="אזור אישי">👤</button>
+  </div>
+
+  <!-- Welcome -->
+  <div id="welcomeScreen" class="flex flex-col items-center justify-center min-h-screen p-6">
+    <div class="text-center bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
+      <div class="text-6xl mb-4 owl-blink">🦉</div>
+      <h1 id="welcomeTitle" tabindex="-1" class="no-focus-outline text-4xl font-bold text-purple-600 mb-4">מספרונצ'יק</h1>
+      <p class="text-2xl text-gray-700 mb-8">בואו ללמוד חשבון עם שופי הינשוף</p>
+      <button type="button" id="startBtn" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-4 rounded-full text-xl font-bold hover:from-purple-600 hover:to-pink-600 transform hover:scale-105 transition-all duration-200 shadow-lg">התחל משחק</button>
+    </div>
+    <footer class="site-signature px-4">
+      <div>© 2025 yaroni studio - תוכן חזק, עובד חכם ומבוסס על בינה</div>
+      <a href="mailto:hello@yaronistudio.com" dir="ltr" class="ltr">hello@yaronistudio.com</a>
+    </footer>
+  </div>
+
+  <!-- Name -->
+  <div id="nameScreen" class="hidden flex flex-col items-center justify-center min-h-screen p-6">
+    <form id="nameForm" class="text-center bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
+      <div class="text-5xl mb-4">👋</div>
+      <h2 id="nameTitle" tabindex="-1" class="no-focus-outline text-3xl font-bold text-blue-600 mb-2">איך קוראים לך?</h2>
+      <p id="nameSubtitle" class="text-gray-600 mb-4 hidden"></p>
+      <input type="text" id="playerName" name="playerName" required placeholder="הכנס את שמך כאן" class="w-full p-4 text-xl border-2 border-gray-300 rounded-xl mb-3 text-center focus:border-blue-500 focus:outline-none">
+      <div class="text-center mb-6">
+        <button type="button" id="profileOrSwitchBtn" class="link-cta">החלף משתמש / אזור אישי</button>
+      </div>
+      <button type="submit" class="bg-gradient-to-r from-blue-500 to-green-500 text-white px-8 py-4 rounded-full text-xl font-bold hover:from-blue-600 hover:to-green-600 transform hover:scale-105 transition-all duration-200 shadow-lg">המשך</button>
+    </form>
+  </div>
+
+  <!-- User Picker -->
+  <div id="userPickerModal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+    <div role="dialog" aria-modal="true" class="bg-white rounded-2xl max-w-md w-full p-6">
+      <h3 class="text-2xl font-bold text-gray-800 mb-3">בחרו משתמש</h3>
+      <div id="userList" class="space-y-2 max-h-[50vh] overflow-auto mb-4"></div>
+      <div class="flex gap-2 justify-between">
+        <button id="userPickerCancel" class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 font-bold">סגור</button>
+        <button id="newUserBtn" class="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700">משתמש חדש</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Curriculum -->
+  <div id="curriculumScreen" class="hidden flex flex-col items-center justify-center min-h-screen p-6">
+    <div class="text-center bg-white rounded-3xl shadow-2xl p-8 max-w-3xl w-full">
+      <div class="text-5xl mb-4">📚</div>
+      <h2 id="curriculumTitle" tabindex="-1" class="no-focus-outline text-3xl md:text-4xl font-extrabold text-green-600 mb-2 leading-tight">יש לבחור תכנית לימוד</h2>
+      <p class="subhead mb-6">בחרו את התכנית המתאימה, ואז לחצו על "המשך"</p>
+
+      <div id="curriculumWrapper" class="relative mb-6">
+        <div id="curriculumGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 curriculum-collapsed">
+          <button type="button" class="choice-card" data-tint="blue" data-value="none" aria-pressed="false">
+            <span class="accent" aria-hidden="true"></span>
+            <div class="emoji">🎯</div>
+            <div class="text-xl font-bold text-gray-800">ללא תוכנית</div>
+            <div class="text-base text-gray-500">בחירה חופשית</div>
+          </button>
+          <button type="button" class="choice-card" data-tint="green" data-value="il_g1_s1" aria-pressed="false">
+            <span class="accent" aria-hidden="true"></span>
+            <div class="emoji">🌱</div>
+            <div class="text-xl font-bold text-gray-800">כיתה א׳, מחצית א׳</div>
+            <div class="text-base text-gray-500">עד 10</div>
+          </button>
+          <button type="button" class="choice-card" data-tint="green" data-value="il_g1_s2" aria-pressed="false">
+            <span class="accent" aria-hidden="true"></span>
+            <div class="emoji">🌿</div>
+            <div class="text-xl font-bold text-gray-800">כיתה א׳, מחצית ב׳</div>
+            <div class="text-base text-gray-500">עד 20</div>
+          </button>
+          <button type="button" class="choice-card" data-tint="green" data-value="il_g1_adv" aria-pressed="false">
+            <span class="accent" aria-hidden="true"></span>
+            <div class="emoji">✨</div>
+            <div class="text-xl font-bold text-gray-800">כיתה א׳, אתגר</div>
+            <div class="text-base text-gray-500">עד 30</div>
+          </button>
+          <button type="button" class="choice-card" data-tint="blue" data-value="il_g2" aria-pressed="false">
+            <span class="accent" aria-hidden="true"></span>
+            <div class="emoji">🧩</div>
+            <div class="text-xl font-bold text-gray-800">כיתה ב׳</div>
+            <div class="text-base text-gray-500">עד 100</div>
+          </button>
+          <button type="button" class="choice-card" data-tint="purple" data-value="il_g3" aria-pressed="false">
+            <span class="accent" aria-hidden="true"></span>
+            <div class="emoji">✖️</div>
+            <div class="text-xl font-bold text-gray-800">כיתה ג׳</div>
+            <div class="text-base text-gray-500">עד 100; כפל/חילוק 10×10</div>
+          </button>
+          <button type="button" class="choice-card" data-tint="orange" data-value="il_g4" aria-pressed="false">
+            <span class="accent" aria-hidden="true"></span>
+            <div class="emoji">🚀</div>
+            <div class="text-xl font-bold text-gray-800">כיתה ד׳</div>
+            <div class="text-base text-gray-500">עד 1000; כפל/חילוק 12×12</div>
+          </button>
+        </div>
+        <div id="curriculumFade" class="hidden"></div>
+      </div>
+
+      <div class="flex items-center justify-center gap-3 flex-wrap">
+        <button id="curriculumMore" type="button" class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 font-bold hidden" aria-expanded="false">הצג עוד</button>
+        <button id="curriculumNext" class="confirm-button bg-gradient-to-r from-green-500 to-blue-500 text-white px-8 py-4 rounded-full text-xl font-bold shadow-lg disabled:opacity-50" disabled aria-disabled="true">המשך</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Operation + Count -->
+  <div id="operationScreen" class="hidden flex flex-col items-center justify-center min-h-screen p-6">
+    <div class="text-center bg-white rounded-3xl shadow-2xl p-8 max-w-3xl w-full">
+      <div class="text-5xl mb-4">🎯</div>
+      <h2 id="operationTitle" tabindex="-1" class="no-focus-outline text-3xl md:text-4xl font-extrabold text-green-600 mb-2 leading-tight">עכשיו יש לבחור את סוג התרגילים</h2>
+      <h3 class="subhead mb-6">בחרו סוג תרגיל ומספר שאלות</h3>
+
+      <div id="opsGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
+        <button type="button" data-op="addition" class="choice-card op-btn" data-tint="green" aria-pressed="false">
+          <span class="accent" aria-hidden="true"></span>
+          <div class="emoji">➕</div>
+          <div class="text-xl font-bold">חיבור</div>
+        </button>
+        <button type="button" data-op="subtraction" class="choice-card op-btn" data-tint="pink" aria-pressed="false">
+          <span class="accent" aria-hidden="true"></span>
+          <div class="emoji">➖</div>
+          <div class="text-xl font-bold">חיסור</div>
+        </button>
+        <button type="button" data-op="multiplication" class="choice-card op-btn" data-tint="purple" aria-pressed="false">
+          <span class="accent" aria-hidden="true"></span>
+          <div class="emoji">✖️</div>
+          <div class="text-xl font-bold">כפל</div>
+        </button>
+        <button type="button" data-op="division" class="choice-card op-btn" data-tint="orange" aria-pressed="false">
+          <span class="accent" aria-hidden="true"></span>
+          <div class="emoji">➗</div>
+          <div class="text-xl font-bold">חילוק</div>
+        </button>
+        <button type="button" data-op="mixed" class="choice-card op-btn col-span-2 sm:col-span-1" data-tint="blue" aria-pressed="false">
+          <span class="accent" aria-hidden="true"></span>
+          <div class="emoji">🎲</div>
+          <div class="text-xl font-bold">הכל</div>
+        </button>
+      </div>
+
+      <div class="mb-2">
+        <div class="subhead mb-3 text-center">מספר שאלות בסט</div>
+        <div id="questionChips" class="chips">
+          <button type="button" class="chip" data-count="6"  aria-pressed="false">6</button>
+          <button type="button" class="chip" data-count="8"  aria-pressed="false">8</button>
+          <button type="button" class="chip" data-count="10" aria-pressed="false">10</button>
+        </div>
+      </div>
+
+      <div class="mt-6">
+        <button id="operationNext" class="confirm-button bg-gradient-to-r from-green-500 to-blue-500 text-white px-8 py-4 rounded-full text-xl font-bold shadow-lg disabled:opacity-50" disabled aria-disabled="true">המשך</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Difficulty -->
+  <div id="difficultyScreen" class="hidden flex flex-col items-center justify-center min-h-screen p-6">
+    <div class="text-center bg-white rounded-3xl shadow-2xl p-8 max-w-lg w-full">
+      <div class="text-5xl mb-4">⚡</div>
+      <h2 id="difficultyTitle" tabindex="-1" class="no-focus-outline text-3xl sm:text-4xl font-bold text-blue-600 mb-6">איזו רמת קושי מתאימה לך היום?</h2>
+
+      <div class="flex flex-col gap-4 mb-2">
+        <button type="button" data-diff="easy"   class="choice-card diff-btn" data-tint="green"  aria-pressed="false">
+          <span class="accent" aria-hidden="true"></span>
+          <div class="emoji">🌱</div>
+          <div class="text-xl font-bold">קל</div>
+        </button>
+        <button type="button" data-diff="medium" class="choice-card diff-btn" data-tint="orange" aria-pressed="false">
+          <span class="accent" aria-hidden="true"></span>
+          <div class="emoji">🔥</div>
+          <div class="text-xl font-bold">בינוני</div>
+        </button>
+        <button type="button" data-diff="hard"   class="choice-card diff-btn" data-tint="purple" aria-pressed="false">
+          <span class="accent" aria-hidden="true"></span>
+          <div class="emoji">⚡</div>
+          <div class="text-xl font-bold">מתקדם</div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game -->
+  <div id="gameScreen" class="hidden min-h-screen p-4">
+    <div class="bg-white rounded-2xl shadow-lg p-4 mb-6 mx-auto max-w-4xl">
+      <div class="flex justify-between items-center mb-4">
+        <div class="text-2xl font-bold text-purple-600">שאלה <span id="currentQuestion" class="ltr">1</span> מתוך <span id="totalQuestions" class="ltr">6</span></div>
+        <div class="text-xl text-gray-600">שלום <span id="gamePlayerName"></span>! 👋</div>
+      </div>
+      <div class="w-full bg-gray-200 rounded-full h-4" aria-hidden="true">
+        <div id="progressBar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" class="bg-gradient-to-r from-green-400 to-blue-500 h-4 rounded-full" style="width: 0%"></div>
+      </div>
+      <div id="statusMsg" class="sr-only" aria-live="polite"></div>
+    </div>
+
+    <div class="bg-white rounded-3xl shadow-2xl p-6 mb-6 mx-auto max-w-lg text-center">
+      <div class="text-5xl mb-4 owl-blink">🦉</div>
+      <div id="questionText" tabindex="-1" class="no-focus-outline text-3xl font-bold text-gray-800 mb-6 ltr">5 + 3 = ?</div>
+      <div class="subhead text-gray-700 mb-4">יש לבחור את התשובה הנכונה</div>
+    </div>
+
+    <div id="answersGrid" class="grid grid-cols-2 gap-4 max-w-lg mx-auto px-4 mb-6">
+      <div class="answer-item shadow-lg flex items-center justify-center min-h-[88px] p-4" data-value="6" data-idx="0" tabindex="0" role="button" aria-selected="false">
+        <span class="accent" aria-hidden="true"></span>
+        <div class="text-4xl font-extrabold text-gray-900 tracking-tight ltr tabular-nums">6</div>
+      </div>
+      <div class="answer-item shadow-lg flex items-center justify-center min-h-[88px] p-4" data-value="8" data-idx="1" tabindex="0" role="button" aria-selected="false">
+        <span class="accent" aria-hidden="true"></span>
+        <div class="text-4xl font-extrabold text-gray-900 tracking-tight ltr tabular-nums">8</div>
+      </div>
+      <div class="answer-item shadow-lg flex items-center justify-center min-h-[88px] p-4" data-value="7" data-idx="2" tabindex="0" role="button" aria-selected="false">
+        <span class="accent" aria-hidden="true"></span>
+        <div class="text-4xl font-extrabold text-gray-900 tracking-tight ltr tabular-nums">7</div>
+      </div>
+      <div class="answer-item shadow-lg flex items-center justify-center min-h-[88px] p-4" data-value="5" data-idx="3" tabindex="0" role="button" aria-selected="false">
+        <span class="accent" aria-hidden="true"></span>
+        <div class="text-4xl font-extrabold text-gray-900 tracking-tight ltr tabular-nums">5</div>
+      </div>
+    </div>
+
+    <div class="text-center space-y-4 pb-6">
+      <button id="confirmButton" type="button" class="confirm-button bg-gradient-to-r from-green-500 to-blue-500 text-white px-8 py-4 rounded-full text-xl font-bold transition-all duration-200 shadow-lg" disabled aria-disabled="true">אשר תשובה</button>
+      <button type="button" id="restartBtn" class="bg-gradient-to-r from-gray-500 to-gray-600 text-white px-6 py-3 rounded-full text-lg font-bold hover:scale-105 transition-all duration-200 shadow-lg">התחל מחדש</button>
+    </div>
+
+    <!-- Feedback -->
+    <div id="feedback" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div role="dialog" aria-modal="true" aria-labelledby="feedbackText" class="bg-white rounded-3xl p-8 text-center max-w-md mx-4">
+        <div id="feedbackIcon" class="text-8xl mb-4">🎉</div>
+        <div id="feedbackText" aria-live="polite" class="text-2xl font-bold mb-6">כל הכבוד!</div>
+        <button id="nextButton" type="button" class="bg-gradient-to-r from-green-500 to-blue-500 text-white px-8 py-4 rounded-full text-xl font-bold hover:scale-105 transition-all duration-200 shadow-lg">לסיכום התוצאות</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="resultsScreen" class="hidden flex flex-col items-center justify-center min-h-screen p-6">
+    <div class="text-center bg-white rounded-3xl shadow-2xl p-8 max-w-lg w-full relative overflow-hidden">
+      <div class="text-8xl mb-4">🏆</div>
+      <h2 id="resultsTitle" tabindex="-1" class="no-focus-outline text-3xl font-bold text-green-600 mb-4">כל הכבוד!</h2>
+      <div class="mb-6">
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-sm font-medium text-gray-600">הביצועים שלך:</span>
+          <span id="performancePercentage" class="text-sm font-bold text-blue-600 ltr">0%</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-6 overflow-hidden">
+          <div id="performanceBar" class="h-6 rounded-full transition-all duration-1000 flex" aria-label="Progress indicator">
+            <div id="correctBar"   class="bg-gradient-to-r from-green-400 to-green-500 transition-all duration-1000" style="width: 0%"></div>
+            <div id="incorrectBar" class="bg-gradient-to-r from-orange-400 to-orange-500 transition-all duration-1000" style="width: 0%"></div>
+          </div>
+        </div>
+        <div class="flex justify-between mt-2 text-sm">
+          <span class="text-green-600 font-medium">✓ נכונות: <span id="correctCount" class="ltr">0</span></span>
+          <span class="text-orange-600 font-medium">✗ שגויות: <span id="incorrectCount" class="ltr">0</span></span>
+        </div>
+      </div>
+      <div class="text-xl text-gray-700 mb-6">
+        <div id="performanceMessage" class="mb-4 font-medium text-lg">סיימת את הסט! 🎯</div>
+        <div class="mb-2">תשובות נכונות: <span id="correctAnswers" class="font-bold text-green-600 ltr">0</span>/<span id="resultsTotal" class="ltr">6</span></div>
+        <div class="mb-4">זמן ממוצע: <span id="averageTime" class="font-bold text-blue-600 ltr">0</span> שניות</div>
+      </div>
+      <div class="flex flex-col gap-4">
+        <button id="retryBtn"              type="button" class="bg-gradient-to-r from-green-500 to-blue-500 text-white px-8 py-4 rounded-full text-xl font-bold hover:scale-105 transition-all duration-200 shadow-lg">אני רוצה לתרגל מחדש</button>
+        <button id="mistakesButton"        type="button" class="bg-gradient-to-r from-orange-500 to-red-500 text-white px-8 py-4 rounded-full text-xl font-bold hover:scale-105 transition-all duration-200 shadow-lg">ללמוד מהטעויות</button>
+        <button id="altBtn"                type="button" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-4 rounded-full text-xl font-bold hover:scale-105 transition-all duration-200 shadow-lg">בא לי תרגול אחר</button>
+        <button id="profileFromResultsBtn" type="button" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-full text-xl font-bold hover:scale-105 transition-all duration-200 shadow-lg">אזור אישי</button>
+      </div>
+    </div>
+    <footer class="site-signature px-4">
+      <div>© 2025 yaroni studio - תוכן חזק, עובד חכם ומבוסס על בינה</div>
+      <a href="mailto:hello@yaronistudio.com" dir="ltr" class="ltr">hello@yaronistudio.com</a>
+    </footer>
+  </div>
+
+  <!-- Mistakes -->
+  <div id="mistakesScreen" class="hidden min-h-screen p-6">
+    <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-4xl mx-auto">
+      <div class="text-center mb-8">
+        <div class="text-6xl mb-4">📚</div>
+        <h2 id="mistakesTitle" tabindex="-1" class="no-focus-outline text-3xl font-bold text-orange-600 mb-4">למד מהטעויות</h2>
+        <div class="mb-6 max-w-md mx-auto">
+          <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden mb-3">
+            <div id="mistakesPerformanceBar" class="h-4 rounded-full transition-all duration-1000 flex" aria-label="Performance summary">
+              <div id="mistakesCorrectBar"   class="bg-gradient-to-r from-green-400 to-green-500 transition-all duration-1000" style="width: 0%"></div>
+              <div id="mistakesIncorrectBar" class="bg-gradient-to-r from-orange-400 to-orange-500 transition-all duration-1000" style="width: 0%"></div>
+            </div>
+          </div>
+          <div id="mistakesMessage" class="subhead text-gray-700 mb-4">הנה התרגילים שבהם טעית</div>
+        </div>
+        <p class="text-lg text-gray-600">לחץ על כל תרגיל כדי ללמוד איך לפתור אותו:</p>
+      </div>
+      <div id="mistakesList" class="space-y-6 mb-8"></div>
+      <div class="text-center space-y-4">
+        <button id="backToResults"       type="button" class="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-8 py-4 rounded-full text-xl font-bold hover:scale-105 transition-all duration-200 shadow-lg">חזור לתוצאות</button>
+        <button id="restartFromMistakes" type="button" class="bg-gradient-to-r from-gray-500 to-gray-600 text-white px-6 py-3 rounded-full text-lg font-bold hover:scale-105 transition-all duration-200 shadow-lg">התחל מחדש</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tutorial -->
+  <div id="tutorialScreen" class="hidden min-h-screen p-6">
+    <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-4xl mx-auto">
+      <div class="text-center mb-8">
+        <div class="text-6xl mb-4">🎓</div>
+        <h2 id="tutorialTitle" tabindex="-1" class="no-focus-outline text-3xl font-bold text-blue-600 mb-4 ltr">7 ÷ 5 = ?</h2>
+        <p class="text-lg text-gray-600">בואו נלמד יחד איך לפתור את השאלה הזו!</p>
+      </div>
+      <div id="tutorialSteps" class="space-y-8 mb-8"></div>
+
+      <div id="interactiveArea" class="bg-blue-50 rounded-2xl p-6 mb-8 text-center">
+        <h3 class="subhead text-blue-600 mb-4">נסה בעצמך!</h3>
+        <div id="interactiveContent" class="flex flex-col items-center justify-center gap-3 mb-4"></div>
+        <div id="interactiveInstructions" role="status" aria-live="polite" class="text-gray-600">השתמש/י בכפתורים כדי להגיע לתוצאה</div>
+      </div>
+
+      <div class="flex justify-center gap-4 flex-wrap">
+        <button id="backToMistakes"      type="button" class="bg-gradient-to-r from-gray-500 to-gray-600 text-white px-6 py-3 rounded-full text-lg font-bold hover:scale-105 transition-all duration-200 shadow-lg">חזור לרשימת הטעויות</button>
+        <button id="restartFromTutorial" type="button" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-full text-lg font-bold hover:scale-105 transition-all duration-200 shadow-lg">התחל מחדש</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile -->
+  <div id="profileScreen" class="hidden min-h-screen p-6">
+    <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-4xl mx-auto">
+      <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+        <h2 class="text-3xl font-bold text-indigo-600">האזור האישי</h2>
+        <div class="flex gap-2">
+          <button id="profileStartBtn"  class="px-4 py-2 rounded-xl bg-green-600 text-white font-bold hover:bg-green-700">התחל משחק</button>
+          <button id="profileSwitchBtn" class="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700">החלף משתמש</button>
+          <button id="profileNewBtn"    class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 font-bold">משתמש חדש</button>
+        </div>
+      </div>
+
+      <div id="profileHeader" class="mb-6 text-lg text-gray-700"></div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div class="p-4 rounded-2xl border-2 border-green-200 bg-green-50">
+          <div class="text-sm text-green-700">סטים שבוצעו</div>
+          <div id="kpiSets" class="text-3xl font-extrabold text-gray-900 ltr">0</div>
+        </div>
+        <div class="p-4 rounded-2xl border-2 border-blue-200 bg-blue-50">
+          <div class="text-sm text-blue-700">דיוק מצטבר</div>
+          <div id="kpiAccuracy" class="text-3xl font-extrabold text-gray-900 ltr">0%</div>
+        </div>
+        <div class="p-4 rounded-2xl border-2 border-purple-200 bg-purple-50">
+          <div class="text-sm text-purple-700">זמן ממוצע לשאלה</div>
+          <div id="kpiAvg" class="text-3xl font-extrabold text-gray-900 ltr">0s</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8" id="byOpGrid"></div>
+
+      <div>
+        <h3 class="text-2xl font-bold text-gray-800 mb-3">היסטוריית סטים</h3>
+        <div id="historyList" class="space-y-2"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="core.js"></script>
+  <script>
+    /* ========= CoreStore init ========= */
+    const coreStore = CoreStore('mspr_profiles_v1', 1);
+
+    /* ========= State ========= */
+    let currentOperation=null, currentDifficulty='easy', currentQuestionIndex=0;
+    let correctCount=0, totalQuestions=6, questions=[], mistakes=[];
+    let startTime=0, totalTime=0, playerName='', selectedAnswer=null;
+    let questionCount=null, currentCurriculum=null;
+    let activeMistake=null;
+    let lastFocusEl=null;
+
+    const SCREENS=['welcomeScreen','nameScreen','curriculumScreen','operationScreen','difficultyScreen','gameScreen','resultsScreen','mistakesScreen','tutorialScreen','profileScreen'];
+
+    /* ========= Rules ========= */
+    const rulesByDifficulty={
+      easy:   {addSubMax:20,  mulMax:5,  divMaxDivisor:5,  divMaxQuotient:5},
+      medium: {addSubMax:100, mulMax:10, divMaxDivisor:10, divMaxQuotient:10},
+      hard:   {addSubMax:1000,mulMax:12, divMaxDivisor:12, divMaxQuotient:12}
+    };
+    const curricula={
+      none:      {name:'ללא תוכנית'},
+      il_g1_s1:  {name:'כיתה א׳, מחצית ראשונה', operations:['addition','subtraction'], addSubMax:10},
+      il_g1_s2:  {name:'כיתה א׳, מחצית שנייה',  operations:['addition','subtraction'], addSubMax:20},
+      il_g1_adv: {name:'כיתה א׳, אתגר',         operations:['addition','subtraction'], addSubMax:30},
+      il_g2:     {name:'כיתה ב׳',               operations:['addition','subtraction'], addSubMax:100},
+      il_g3:     {name:'כיתה ג׳',               operations:['addition','subtraction','multiplication','division'], addSubMax:100, mulMax:10, divMaxDivisor:10, divMaxQuotient:10},
+      il_g4:     {name:'כיתה ד׳',               operations:['addition','subtraction','multiplication','division'], addSubMax:1000,mulMax:12, divMaxDivisor:12, divMaxQuotient:12}
+    };
+
+    const randInt=(min,max)=>Math.floor(Math.random()*(max-min+1))+min;
+
+    /* ========= Questions ========= */
+    function getEffectiveRules(diff){
+      const base=Object.assign({},rulesByDifficulty[diff]);
+      const cur=curricula[currentCurriculum]||{};
+      ['addSubMax','mulMax','divMaxDivisor','divMaxQuotient'].forEach(k=>{ if(typeof cur[k]!=='undefined') base[k]=cur[k]; });
+      return base;
+    }
+    function getOpsList(selectedOp,cur){
+      if(selectedOp!=='mixed') return [selectedOp];
+      const allowed=cur&&cur.operations?cur.operations:null;
+      return (allowed&&allowed.length)?allowed:['addition','subtraction','multiplication','division'];
+    }
+    function buildOpPool(op,rules,targetSize,diff){
+      const pool=[]; let tries=0, max=6000;
+      const mk=(text,ans,op,a,b,sym)=>({ id:`${op}:${a}${sym}${b}`, questionText:text, answer:ans, operation:op, num1:a, num2:b, symbol:sym });
+      if(op==='addition')     { while(pool.length<targetSize&&tries++<max){ const flu=(diff==='easy')&&Math.random()<.5; const cap=flu?Math.min(10,rules.addSubMax):rules.addSubMax; const a=randInt(0,cap),b=randInt(0,cap),ans=a+b; if(ans<=cap) pool.push(mk(`${a} + ${b} = ?`,ans,op,a,b,'+')); } }
+      if(op==='subtraction')  { while(pool.length<targetSize&&tries++<max){ const flu=(diff==='easy')&&Math.random()<.5; const cap=flu?Math.min(10,rules.addSubMax):rules.addSubMax; const a=randInt(0,cap),b=randInt(0,a),ans=a-b; if(ans>=0) pool.push(mk(`${a} - ${b} = ?`,ans,op,a,b,'-')); } }
+      if(op==='multiplication'){ while(pool.length<targetSize&&tries++<max){ const a=randInt(1,rules.mulMax),b=randInt(1,rules.mulMax); pool.push(mk(`${a} × ${b} = ?`,a*b,op,a,b,'×')); } }
+      if(op==='division')     { while(pool.length<targetSize&&tries++<max){ const d=randInt(1,rules.divMaxDivisor),q=randInt(1,rules.divMaxQuotient); const n=d*q; pool.push(mk(`${n} ÷ ${d} = ?`,q,op,q,d,'÷')); } }
+      return pool;
+    }
+    function generatePracticeSet(operation,diff,count){
+      const rules=getEffectiveRules(diff); const cur=curricula[currentCurriculum]; const ops=getOpsList(operation,cur);
+      let pool=[]; ops.forEach(o=>pool=pool.concat(buildOpPool(o,rules,count*4,diff)));
+      const map={}; pool.forEach(q=>{ if(!map[q.id]) map[q.id]=q; });
+      return shuffle(Object.values(map)).slice(0,count);
+    }
+    function generateAnswerOptions(correct){
+      const opts=new Set([correct]);
+      const span=Math.max(5,Math.ceil(Math.abs(correct)*0.25+1));
+      let tries=0;
+      while(opts.size<4 && tries++<200){
+        const delta=randInt(-span,span);
+        const wrong=correct+delta;
+        if(wrong>=0 && wrong!==correct) opts.add(wrong);
+      }
+      // safety: fill remaining slots with simple increments
+      let fill=1;
+      while(opts.size<4){ const w=correct+fill; if(w>=0) opts.add(w); fill++; if(fill>1000) break; }
+      return shuffle([...opts]);
+    }
+
+    /* ========= Curriculum gating ========= */
+    function applyCurriculumToOperationButtons(){
+      const cur=curricula[currentCurriculum]; const allowed=cur&&cur.operations?cur.operations:null;
+      $$('#opsGrid .op-btn').forEach(btn=>{
+        const op=btn.getAttribute('data-op');
+        const enabled=!allowed || op==='mixed' || allowed.includes(op);
+        btn.classList.toggle('opacity-50',!enabled);
+        btn.classList.toggle('pointer-events-none',!enabled);
+        btn.classList.toggle('cursor-not-allowed',!enabled);
+        btn.setAttribute('aria-disabled', enabled?'false':'true');
+        if(!enabled && btn.classList.contains('selected')){
+          btn.classList.remove('selected'); btn.setAttribute('aria-pressed','false');
+          if(currentOperation===op) currentOperation=null;
+        }
+      });
+      updateOperationNextState();
+    }
+
+    /* ========= Curriculum overflow ========= */
+    let isCurriculumExpanded=false;
+    function refreshCurriculumOverflow(){
+      const grid=$('#curriculumGrid'), more=$('#curriculumMore'), fade=$('#curriculumFade');
+      if(!grid||!more||!fade) return;
+      const overflow=grid.scrollHeight>grid.clientHeight+2;
+      more.classList.toggle('hidden', !overflow && !isCurriculumExpanded);
+      fade.classList.toggle('hidden', isCurriculumExpanded || !overflow);
+    }
+    function setCurriculumExpanded(expanded){
+      isCurriculumExpanded=!!expanded;
+      const grid=$('#curriculumGrid'), more=$('#curriculumMore'); if(!grid||!more) return;
+      grid.classList.toggle('curriculum-collapsed',!isCurriculumExpanded);
+      more.textContent=isCurriculumExpanded?'הצג פחות':'הצג עוד';
+      more.setAttribute('aria-expanded',isCurriculumExpanded?'true':'false');
+      refreshCurriculumOverflow();
+    }
+
+    /* ========= Flow ========= */
+    function showNameInput(){
+      const prof=coreStore.getActive();
+      showScreens(SCREENS,'nameScreen');
+      const subtitle=$('#nameSubtitle');
+      if(prof){ $('#playerName').value=prof.name; subtitle.textContent=`נעים לראותך שוב, ${prof.name}!`; subtitle.classList.remove('hidden'); }
+      else{ $('#playerName').value=''; subtitle.classList.add('hidden'); }
+      focusTop('#nameTitle'); updateStatus('');
+    }
+
+    function showUserPicker(){
+      const list=$('#userList'); list.innerHTML='';
+      const arr=coreStore.profilesArr();
+      if(arr.length<=1){ $('#userPickerModal').classList.add('hidden'); showProfile(); return; }
+      arr.forEach(p=>{
+        const btn=document.createElement('button');
+        btn.className='w-full text-right p-3 border-2 border-gray-200 rounded-xl hover:bg-gray-50 flex items-center justify-between';
+        btn.innerHTML=`<span class="font-bold text-gray-800">${escapeHtml(p.name)}</span><span class="text-sm text-gray-500 ltr">${new Date(p.lastSeen||Date.now()).toLocaleDateString('he-IL')}</span>`;
+        btn.onclick=()=>{ coreStore.setActive(p.id); $('#playerName').value=p.name; $('#userPickerModal').classList.add('hidden'); if(!$('#profileScreen').classList.contains('hidden')) renderProfile(); lastFocusEl&&lastFocusEl.focus(); };
+        list.appendChild(btn);
+      });
+      lastFocusEl=document.activeElement;
+      $('#userPickerModal').classList.remove('hidden');
+      trapDialog('#userPickerModal',()=>{ lastFocusEl&&lastFocusEl.focus(); });
+    }
+
+    function showCurriculumSelect(){
+      let name='';
+      const prof=coreStore.getActive();
+      if(prof&&prof.name) name=prof.name.trim();
+      else{
+        const inp=$('#playerName'); const typed=(inp?.value||'').trim();
+        if(!typed){ alert('אנא הכנס את שמך'); inp?.focus(); return; }
+        name=typed;
+      }
+      playerName=name;
+      coreStore.ensureByName(name);
+
+      showScreens(SCREENS,'curriculumScreen');
+      currentCurriculum=null;
+      $$('#curriculumGrid .choice-card').forEach(b=>{ b.classList.remove('selected'); b.setAttribute('aria-pressed','false'); });
+      const btn=$('#curriculumNext'); btn.disabled=true; btn.setAttribute('aria-disabled','true');
+      setCurriculumExpanded(false);
+      requestAnimationFrame(refreshCurriculumOverflow);
+      focusTop('#curriculumTitle'); updateStatus('');
+    }
+
+    function showOperationSelect(){
+      if(!currentCurriculum){ alert('יש לבחור תכנית לימוד'); return; }
+      showScreens(SCREENS,'operationScreen');
+      currentOperation=null; questionCount=null;
+      $$('#opsGrid .op-btn').forEach(b=>{ b.classList.remove('selected'); b.setAttribute('aria-pressed','false'); });
+      $$('#questionChips .chip').forEach(c=>{ c.classList.remove('selected'); c.setAttribute('aria-pressed','false'); });
+      applyCurriculumToOperationButtons(); updateOperationNextState();
+      focusTop('#operationTitle'); updateStatus('');
+    }
+
+    function showDifficultySelect(){
+      if(!currentOperation||!questionCount){ alert('בחר/י סוג תרגיל ומספר שאלות'); return; }
+      showScreens(SCREENS,'difficultyScreen');
+      $$('#difficultyScreen .diff-btn').forEach(b=>{ b.classList.remove('selected'); b.setAttribute('aria-pressed','false'); });
+      wireDifficultyButtons();
+      focusTop('#difficultyTitle'); updateStatus('');
+    }
+
+    function startGame(diff){
+      try{
+        $('#feedback')?.classList.add('hidden');
+        const nb=$('#nextButton'); if(nb) nb.onclick=null;
+        currentDifficulty=diff; currentQuestionIndex=0; correctCount=0; totalTime=0; mistakes=[]; selectedAnswer=null;
+
+        questions=generatePracticeSet(currentOperation,diff,questionCount||6);
+        if(!questions.length){ alert('שגיאה: לא ניתן ליצור תרגילים עבור ההגדרות שנבחרו'); return; }
+
+        totalQuestions=questions.length; $('#totalQuestions').textContent=totalQuestions; $('#resultsTotal').textContent=totalQuestions;
+        showScreens(SCREENS,'gameScreen');
+
+        const prof=coreStore.getActive(); playerName=prof?prof.name:playerName;
+        $('#gamePlayerName').textContent=playerName;
+
+        const pb=$('#progressBar'); pb.style.width='0%'; pb.setAttribute('aria-valuenow','0');
+        showQuestion();
+        focusTop('#questionText');
+        updateStatus('יצאנו לדרך! בחר/י תשובה ואז אשר/י.');
+      }catch(err){
+        console.error('startGame error:',err);
+        alert('אירעה תקלה בהפעלת המשחק. רענן/ני או נסה/י שוב.');
+      }
+    }
+
+    /* ========= Game ========= */
+    function showQuestion(){
+      if(currentQuestionIndex>=questions.length){ showResults(); return; }
+      selectedAnswer=null;
+      const q=questions[currentQuestionIndex];
+      $('#questionText').textContent=q.questionText;
+      $('#currentQuestion').textContent=currentQuestionIndex+1;
+
+      const prog=(currentQuestionIndex/totalQuestions)*100;
+      const pb=$('#progressBar'); const p=Math.max(2,Math.round(prog)); pb.style.width=p+'%'; pb.setAttribute('aria-valuenow',String(p));
+
+      const options=generateAnswerOptions(q.answer);
+      const items=$$('#answersGrid .answer-item');
+      options.forEach((opt,i)=>{ const el=items[i]; if(!el) return; el.setAttribute('data-value',String(opt)); el.setAttribute('data-idx',String(i)); el.querySelector('.tabular-nums').textContent=String(opt); el.classList.remove('selected'); el.setAttribute('aria-selected','false'); });
+
+      disableConfirm();
+      startTime=Date.now();
+    }
+
+    function enableConfirm(){ const btn=$('#confirmButton'); btn.disabled=false; btn.removeAttribute('disabled'); btn.setAttribute('aria-disabled','false'); }
+    function disableConfirm(){ const btn=$('#confirmButton'); btn.disabled=true; btn.setAttribute('disabled',''); btn.setAttribute('aria-disabled','true'); }
+
+    function confirmAnswer(){
+      unlockAudioOnce();
+      const btn=$('#confirmButton');
+      if(!btn||btn.hasAttribute('disabled')) return;
+      if(selectedAnswer===null) return;
+
+      disableConfirm();
+
+      const correct=questions[currentQuestionIndex].answer;
+      const end=Date.now();
+      totalTime=Math.max(0,totalTime+(end-startTime)/1000);
+
+      const isLast=currentQuestionIndex===totalQuestions-1;
+
+      if(selectedAnswer===correct){
+        correctCount++; playSuccessSound();
+        updateStatus(isLast?'מעולה! סיימנו את הסט — עוברים לסיכום.':'כל הכבוד! לשאלה הבאה…');
+      }else{
+        mistakes.push({ question:questions[currentQuestionIndex], userAnswer:selectedAnswer, correctAnswer:correct, reviewed:false });
+        playErrorSound();
+        updateStatus(isLast?'סיימנו את הסט — עוברים לסיכום.':'כמעט! ממשיכים לשאלה הבאה…');
+      }
+
+      if(isLast){ showFinalFeedback(); }
+      else{ setTimeout(nextQuestion,900); }
+    }
+
+    function showFinalFeedback(){
+      const fb=$('#feedback'), icon=$('#feedbackIcon'), text=$('#feedbackText'), nextBtn=$('#nextButton');
+      const pct=Math.round((correctCount/totalQuestions)*100);
+      if(pct===100){ icon.textContent='👏'; text.className='text-2xl font-bold mb-6 text-green-600'; text.textContent='ואוו אליפות, סיימנו את הסט'; }
+      else if(pct>=60){ icon.textContent='👏'; text.className='text-2xl font-bold mb-6 text-blue-600'; text.textContent='עבודה טובה, סיימנו את הסט'; }
+      else{ icon.textContent='💪'; text.className='text-2xl font-bold mb-6 text-orange-600'; text.textContent='סיימנו את הסט'; }
+      nextBtn.textContent='לסיכום התוצאות';
+      lastFocusEl=document.activeElement;
+      nextBtn.onclick=()=>{ $('#feedback').classList.add('hidden'); showResults(); lastFocusEl&&lastFocusEl.focus(); };
+      fb.classList.remove('hidden');
+      trapDialog('#feedback');
+    }
+
+    function nextQuestion(){
+      currentQuestionIndex++;
+      if(currentQuestionIndex<totalQuestions){ showQuestion(); $('#confirmButton').focus(); }
+      else{ const pb=$('#progressBar'); pb.style.width='100%'; pb.setAttribute('aria-valuenow','100'); showResults(); }
+    }
+
+    function getResultsTitleCopy(name,pct){
+      if(pct===0)      return `לא נורא ${name}, שופי בטוח שבפעם הבאה תהיה תוצאה טובה יותר`;
+      else if(pct<=59) return `${name} רואים שיפור, שופי מחכה לתרגול נוסף`;
+      else if(pct<=79) return `${name} עבודה טובה, שופי מחכה לתרגול נוסף`;
+      else if(pct<=89) return `ואוו ${name}, איזו שליטה נמשיך לתרגל עם שופי`;
+      return `כל הכבוד ${name} שופי גאה בך!`;
+    }
+
+    function logSessionToProfile(){
+      const bucket=currentOperation||'mixed';
+      const avgSec=Math.max(1,Math.round(totalTime/Math.max(1,totalQuestions)));
+      coreStore.logSession({
+        meta:{ curriculum:currentCurriculum, op:currentOperation, diff:currentDifficulty,
+               count:totalQuestions, correct:correctCount, avgSec, mistakesCount:mistakes.length },
+        totals:{ questions:totalQuestions, correct:correctCount, timeSec:Math.round(totalTime) },
+        breakdown:{ [bucket]:{ questions:totalQuestions, correct:correctCount, timeSec:Math.round(totalTime) } }
+      });
+    }
+
+    function showResults(){
+      showScreens(SCREENS,'resultsScreen');
+      const incorrect=totalQuestions-correctCount;
+      const pct=Math.round((correctCount/totalQuestions)*100);
+      const prof=coreStore.getActive(); const displayName=prof?prof.name:playerName;
+      $('#resultsTitle').textContent=getResultsTitleCopy(displayName,pct);
+
+      const msg=$('#performanceMessage'), icon=$('#resultsScreen .text-8xl');
+      if(correctCount===totalQuestions){ msg.textContent='מושלם! ענית נכון על כל השאלות! 🌟'; msg.className='mb-4 font-medium text-lg text-green-600'; icon.textContent='🏆'; confettiBurst($('#resultsScreen .bg-white')||$('#resultsScreen')); }
+      else if(pct<50){ msg.textContent='נחזק את החולשות ואחר כך נתרגל שוב.'; msg.className='mb-4 font-medium text-lg text-orange-600'; icon.textContent='💪'; }
+      else{ msg.textContent='ענית נכון על '+correctCount+' מתוך '+totalQuestions+' שאלות - כל הכבוד! 🎯'; msg.className='mb-4 font-medium text-lg text-blue-600'; icon.textContent='🏆'; }
+
+      updatePerformanceBar(correctCount,incorrect,pct);
+      $('#correctAnswers').textContent=String(correctCount);
+      $('#averageTime').textContent=String(Math.max(1,Math.round(totalTime/totalQuestions)));
+      $('#mistakesButton').classList.toggle('hidden',mistakes.length===0);
+
+      logSessionToProfile();
+
+      let coachText='סיכום הסט הושלם.';
+      if(mistakes.length===0) coachText+=' אפשר לתרגל מחדש.';
+      else if(mistakes.length===1) coachText+=' אפשר לתרגל מחדש או ללמוד מהטעות.';
+      else coachText+=' אפשר לתרגל מחדש או ללמוד מהטעויות.';
+      updateStatus(coachText);
+
+      focusTop('#resultsTitle');
+    }
+
+    function updatePerformanceBar(correct,incorrect,pct){
+      $('#correctBar').style.width=(correct/totalQuestions*100)+'%';
+      $('#incorrectBar').style.width=(incorrect/totalQuestions*100)+'%';
+      $('#performancePercentage').textContent=pct+'%';
+      $('#correctCount').textContent=String(correct);
+      $('#incorrectCount').textContent=String(incorrect);
+    }
+
+    /* ========= Mistakes & Tutorial ========= */
+    function showMistakes(){
+      showScreens(SCREENS,'mistakesScreen');
+      const incorrect=totalQuestions-correctCount;
+      $('#mistakesCorrectBar').style.width=((correctCount/totalQuestions)*100)+'%';
+      $('#mistakesIncorrectBar').style.width=((incorrect/totalQuestions)*100)+'%';
+      const mm=$('#mistakesMessage');
+      if(mistakes.length===0){
+        mm.textContent='מושלם! ענית נכון על כל '+totalQuestions+' השאלות! 🌟';
+        mm.className='subhead text-green-600 mb-4';
+        $('#mistakesList').innerHTML='<div class="text-center p-8"><div class="text-6xl mb-4">🎉</div><h3 class="text-2xl font-bold text-green-600">מעולה!</h3><p class="text-lg text-gray-600">לא היו לך טעויות במשחק הזה!</p></div>';
+        focusTop('#mistakesTitle'); return;
+      } else if(correctCount>0){
+        mm.textContent='ענית נכון על '+correctCount+' מתוך '+totalQuestions+' - בואו נלמד מה-'+mistakes.length+' שנשארו';
+        mm.className='subhead text-blue-600 mb-4';
+      } else {
+        mm.textContent='בואו נלמד יחד איך לפתור את השאלות האלה';
+        mm.className='subhead text-orange-600 mb-4';
+      }
+
+      const list=$('#mistakesList'); list.innerHTML='';
+      questions.forEach((q,i)=>{
+        const m=mistakes.find(x=>x.question.id===q.id); if(!m) return;
+        const why=getWhyTip(m);
+        const d=document.createElement('div');
+        d.className='bg-orange-50 border-2 border-orange-200 rounded-2xl p-6 cursor-pointer hover:bg-orange-100 transition-colors';
+        d.onclick=()=>showTutorial(m);
+        d.innerHTML=`
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+              <div class="w-4 h-4 bg-orange-500 rounded-full"></div>
+              <h3 class="text-xl font-bold text-orange-600">שאלה ${(i+1)}</h3>
+            </div>
+            <div class="text-2xl">🤔</div>
+          </div>
+          <div class="text-2xl font-bold text-gray-800 mb-4 ltr">${escapeHtml(m.question.questionText)}</div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+            <div class="bg-red-100 border-2 border-red-300 rounded-xl p-4">
+              <div class="text-sm text-red-600 font-bold mb-1">התשובה שלך:</div>
+              <div class="text-xl font-bold text-red-700 ltr">${m.userAnswer}</div>
+            </div>
+            <div class="bg-green-100 border-2 border-green-300 rounded-xl p-4">
+              <div class="text-sm text-green-600 font-bold mb-1">התשובה הנכונה:</div>
+              <div class="text-xl font-bold text-green-700 ltr">${m.correctAnswer}</div>
+            </div>
+          </div>
+          <div class="text-sm text-gray-600 mb-2">${why?('למה זה קרה? '+why):''}</div>
+          <div class="text-center text-blue-600 font-bold">👆 לחץ כאן כדי ללמוד איך לפתור</div>
+        `;
+        list.appendChild(d);
+      });
+      focusTop('#mistakesTitle');
+      updateStatus('לחץ על שאלה כדי לראות הסבר אינטראקטיבי.');
+    }
+
+    function showTutorial(m){
+      activeMistake=m;
+      showScreens(SCREENS,'tutorialScreen');
+      const q=m.question; const title=$('#tutorialTitle'); title.textContent=q.questionText;
+      createTutorialSteps(q); createInteractiveDemoNumeric(q);
+      requestAnimationFrame(()=>{ title.focus({preventScroll:true}); window.scrollTo({top:0,behavior:'auto'}); });
+      updateStatus('הנה הסבר צעד־אחר־צעד. השתמש/י בכפתורי המספרים כדי להגיע לתוצאה.');
+    }
+
+    function createTutorialSteps(q){
+      const c=$('#tutorialSteps'); c.innerHTML='';
+      getTutorialSteps(q).forEach((s,i)=>{
+        const d=document.createElement('div');
+        d.className='bg-blue-50 border-2 border-blue-200 rounded-2xl p-6';
+        d.innerHTML='<div class="flex items-center mb-4"><div class="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4">'+(i+1)+'</div><h3 class="text-xl font-bold text-blue-600">'+s.title+'</h3></div><p class="text-gray-700 text-lg">'+s.description+'</p>';
+        c.appendChild(d);
+      });
+    }
+
+    function getTutorialSteps(q){
+      const {operation,num1,num2,answer}=q;
+      if(operation==='addition') return[
+        {title:'הבנת השאלה',description:'אנחנו רוצים לדעת כמה זה '+num1+' + '+num2+'.'},
+        {title:'לבנות את המספר',description:'נשתמש בכפתורי מספרים כדי להגיע לתוצאה — עדיף להתחיל בצעדים גדולים ואז לדייק.'},
+        {title:'דיוק',description:'כשקרובים לתוצאה, עוברים לצעדים קטנים יותר (למשל +1).'},
+        {title:'התוצאה',description:'עוצרים בדיוק ב־'+answer+'.'}
+      ];
+      if(operation==='subtraction') return[
+        {title:'הבנת השאלה',description:'אנחנו רוצים לדעת כמה זה '+num1+' - '+num2+'.'},
+        {title:'להגיע למספר היעד',description:'נתחיל מ־'+num1+' ונחסר בצעדים גדולים, ואז נעבור לקטנים.'},
+        {title:'דיוק',description:'אפשר גם להחזיר מעט עם +1 אם ירדנו יותר מדי.'},
+        {title:'התוצאה',description:'עוצרים בדיוק ב־'+answer+'.'}
+      ];
+      if(operation==='multiplication') return[
+        {title:'הבנת השאלה',description:'אנחנו רוצים לדעת כמה זה '+num1+' × '+num2+'.'},
+        {title:'קבוצות שוות',description:'נוסיף קבוצות במספרים (לא פריטים), כל קבוצה בגודל '+num2+'.'},
+        {title:'ספירה',description:'נספור את כל הקבוצות/הפריטים שנוצרו.'},
+        {title:'התוצאה',description:'כאשר נוסיף '+num1+' קבוצות נקבל '+answer+'.'}
+      ];
+      if(operation==='division'){
+        const dividend=num1*num2; const divisor=num2;
+        return[
+          {title:'הבנת השאלה',description:'אנחנו רוצים לדעת כמה זה '+dividend+' ÷ '+divisor+'.'},
+          {title:'יצירת קבוצות',description:'נוסיף קבוצות אחת אחת (או בקפיצות), כל קבוצה בגודל '+divisor+'.'},
+          {title:'עצירה בזמן',description:'עוצרים כשסיימנו לחלק את כל ה־'+dividend+' ללא שארית.'},
+          {title:'התוצאה',description:'מספר הקבוצות הוא '+answer+'.'}
+        ];
+      }
+      return [];
+    }
+
+    function markActiveMistakeReviewed(){ if(!activeMistake) return; activeMistake.reviewed=true; }
+
+    /* === Numeric interactive demos === */
+    function stepSetByMagnitude(maxVal){
+      if(maxVal<=20)  return [5,1];
+      if(maxVal<=100) return [10,5,1];
+      return [100,50,20,10,5,1];
+    }
+    function makeStepButton(label,onClick){
+      const b=document.createElement('button');
+      b.className='chip'; b.type='button'; b.textContent=label;
+      b.onclick=()=>{ unlockAudioOnce(); onClick(); };
+      return b;
+    }
+    function numericStepper({start,target,allowNegative=false}){
+      const area=$('#interactiveContent'), info=$('#interactiveInstructions');
+      area.innerHTML=''; let cur=start;
+      const bigBox=document.createElement('div');
+      bigBox.className='inline-flex items-center justify-center text-4xl font-extrabold text-gray-900 rounded-2xl border-2 border-blue-300 bg-white px-8 py-5 mb-2 ltr tabular-nums';
+      bigBox.textContent=cur; area.appendChild(bigBox);
+      const hint=document.createElement('div'); hint.className='text-sm text-gray-600 mb-2'; hint.textContent=`מטרה: ${target}`; area.appendChild(hint);
+      const steps=stepSetByMagnitude(Math.max(Math.abs(start),Math.abs(target)));
+      const row=document.createElement('div'); row.className='flex flex-wrap gap-3 justify-center';
+      steps.forEach(s=> row.appendChild(makeStepButton('+'+s,()=>{ cur+=s; update(); })));
+      if(allowNegative){ steps.forEach(s=> row.appendChild(makeStepButton('−'+s,()=>{ cur-=s; update(); }))); }
+      area.appendChild(row);
+      const reset=document.createElement('button'); reset.type='button'; reset.className='chip mt-2'; reset.textContent='איפוס'; reset.onclick=()=>{ cur=start; update(); }; area.appendChild(reset);
+      function update(){
+        bigBox.textContent=cur;
+        if(cur===target){ info.textContent='בול! הגעת לתוצאה המבוקשת 🎉'; info.className='text-green-600 font-bold text-lg'; markActiveMistakeReviewed(); }
+        else{ const dir=cur<target?'העלה':'הורד'; info.textContent=`${dir} את המספר עד ${target}`; info.className='text-gray-600'; }
+      }
+      update();
+    }
+    function groupsNumericDemo(groupsNeeded,groupSize){
+      const area=$('#interactiveContent'), info=$('#interactiveInstructions'); area.innerHTML=''; let groups=0;
+      const totalBox=document.createElement('div'); totalBox.className='text-2xl font-extrabold text-gray-900 ltr tabular-nums';
+      const groupsBox=document.createElement('div'); groupsBox.className='text-xl font-bold text-blue-700';
+      const top=document.createElement('div'); top.className='flex flex-col items-center gap-1'; top.appendChild(groupsBox); top.appendChild(totalBox); area.appendChild(top);
+      const steps=stepSetByMagnitude(groupsNeeded);
+      const row=document.createElement('div'); row.className='flex flex-wrap gap-3 justify-center my-3';
+      steps.forEach(s=> row.appendChild(makeStepButton('+'+s+' קבוצות',()=>{ groups=Math.min(groupsNeeded,groups+s); update(); })));
+      row.appendChild(makeStepButton('איפוס',()=>{ groups=0; update(); })); area.appendChild(row);
+      function update(){
+        groupsBox.textContent=`קבוצות: ${groups}/${groupsNeeded} (כל קבוצה ${groupSize})`;
+        totalBox.textContent=`סה״כ פריטים: ${groups*groupSize}`;
+        if(groups>=groupsNeeded){ info.textContent=`מעולה! ${groupsNeeded}×${groupSize} = ${groupsNeeded*groupSize} 🎉`; info.className='text-green-600 font-bold text-lg'; markActiveMistakeReviewed(); }
+        else{ info.textContent=`הוסיפו קבוצות עד ${groupsNeeded}`; info.className='text-gray-600'; }
+      }
+      update();
+    }
+    function divisionNumericDemo(dividend,groupSize,groupsNeeded){
+      const area=$('#interactiveContent'), info=$('#interactiveInstructions'); area.innerHTML='';
+      let groups=0, remaining=dividend;
+      const remBox=document.createElement('div'); remBox.className='text-xl font-bold text-purple-700';
+      const groupsBox=document.createElement('div'); groupsBox.className='text-xl font-bold text-purple-700';
+      const bigRes=document.createElement('div'); bigRes.className='text-2xl font-extrabold text-gray-900 ltr tabular-nums mt-1 text-center';
+      const top=document.createElement('div'); top.className='grid grid-cols-1 sm:grid-cols-2 gap-3 items-start justify-center mb-2'; top.appendChild(remBox); top.appendChild(groupsBox); area.appendChild(top); area.appendChild(bigRes);
+      const steps=stepSetByMagnitude(groupsNeeded);
+      const row=document.createElement('div'); row.className='flex flex-wrap gap-3 justify-center my-3';
+      steps.forEach(s=> row.appendChild(makeStepButton('+'+s+' קבוצות',()=>{
+        const canAdd=Math.min(s,Math.floor(remaining/groupSize));
+        groups=Math.min(groupsNeeded,groups+canAdd);
+        remaining=Math.max(0,remaining-canAdd*groupSize);
+        update();
+      })));
+      row.appendChild(makeStepButton('איפוס',()=>{ groups=0; remaining=dividend; update(); })); area.appendChild(row);
+      function update(){
+        remBox.textContent=`נשאר לחלק: ${remaining}`;
+        groupsBox.textContent=`קבוצות: ${groups}/${groupsNeeded} (כל קבוצה ${groupSize})`;
+        bigRes.textContent=`חולקו: ${groups*groupSize} מתוך ${dividend}`;
+        if(groups>=groupsNeeded||remaining<=0){ groups=groupsNeeded; remaining=0; info.textContent=`מעולה! ${dividend} ÷ ${groupSize} = ${groupsNeeded} 🎉`; info.className='text-green-600 font-bold text-lg'; markActiveMistakeReviewed(); }
+        else{ info.textContent=`צרו קבוצות עד שתחלקו את כל ה־${dividend}`; info.className='text-gray-600'; }
+      }
+      update();
+    }
+    function createInteractiveDemoNumeric(q){
+      const info=$('#interactiveInstructions'); info.className='text-gray-600';
+      const {operation,num1,num2,answer}=q;
+      if(operation==='addition')      { numericStepper({start:0,   target:answer,allowNegative:true}); info.textContent=`בנו את ${answer} בעזרת כפתורי מספרים (אפשר גם לחזור אחורה אם עברתם).`; return; }
+      if(operation==='subtraction')   { numericStepper({start:num1,target:answer,allowNegative:true}); info.textContent=`התחילו מ־${num1} והשתמשו בחיסור (ואם צריך בהוספה) כדי להגיע ל־${answer}.`; return; }
+      if(operation==='multiplication'){ groupsNumericDemo(num1,num2); info.textContent=`הוסיפו קבוצות בגודל ${num2} עד שתגיעו ל־${num1} קבוצות.`; return; }
+      if(operation==='division')      { const dividend=num1*num2,size=num2,groupsNeeded=answer; divisionNumericDemo(dividend,size,groupsNeeded); info.textContent=`צרו קבוצות של ${size} עד שתחלקו את כל ה־${dividend}.`; return; }
+    }
+
+    /* ========= Why-tip ========= */
+    function getWhyTip(m){
+      const {operation,num1,num2}=m.question; const ua=m.userAnswer;
+      if(operation==='addition')      { if(ua===num1-num2) return 'נראה שחיסרת במקום לחבר.'; return 'השתמש/י בצעדים גדולים (+10/‏+5) ואז לדייק עם +1.'; }
+      if(operation==='subtraction')   { if(ua===num1+num2) return 'נראה שחיברת במקום לחסר.'; return 'התחל/י מ־'+num1+' וחסר/י בצעדים גדולים (−10/‏−5) ואז דייק/י עם −1.'; }
+      if(operation==='multiplication'){ if(ua===num1+num2) return 'כפל הוא קבוצות שוות, לא חיבור חד־פעמי.'; return 'הוסיפו קבוצות (לא פריטים) עד שמספר הקבוצות שווה ל־'+num1+'.'; }
+      if(operation==='division')      { return 'צרו קבוצות שוות והפסיקו כשאין מה לחלק — מספר הקבוצות הוא התשובה.'; }
+      return '';
+    }
+
+    /* ========= Answers grid ========= */
+    function bindAnswerGrid(){
+      const grid=$('#answersGrid'); if(!grid) return;
+      grid.addEventListener('click',e=>{
+        const item=e.target.closest('.answer-item'); if(!item||!grid.contains(item)) return;
+        unlockAudioOnce(); chooseItem(item);
+      });
+      grid.addEventListener('keydown',e=>{
+        const item=e.target.closest('.answer-item'); if(!item||!grid.contains(item)) return;
+        if(e.key==='Enter'||e.key===' '){ e.preventDefault(); unlockAudioOnce(); chooseItem(item); }
+      });
+      function chooseItem(item){
+        $$('#answersGrid .answer-item').forEach(it=>{ it.classList.remove('selected'); it.setAttribute('aria-selected','false'); });
+        item.classList.add('selected'); item.setAttribute('aria-selected','true');
+        selectedAnswer=parseInt(item.getAttribute('data-value'),10);
+        enableConfirm(); playSelectTick();
+      }
+    }
+
+    /* ========= Operation next btn ========= */
+    function updateOperationNextState(){
+      const nextBtn=$('#operationNext'); const enabled=!!currentOperation&&!!questionCount;
+      nextBtn.disabled=!enabled; nextBtn.setAttribute('aria-disabled',enabled?'false':'true');
+    }
+
+    /* ========= Profile ========= */
+    function showProfile(){ showScreens(SCREENS,'profileScreen'); renderProfile(); focusTop('#profileScreen .text-indigo-600'); updateStatus(''); }
+    function setSwitchBtnDisabled(disabled){ const btn=$('#profileSwitchBtn'); if(!btn) return; btn.disabled=disabled; btn.classList.toggle('btn-disabled',disabled); }
+    function renderProfile(){
+      const prof=coreStore.getActive(); const header=$('#profileHeader'); const totalUsers=coreStore.profilesArr().length;
+      setSwitchBtnDisabled(totalUsers<=1);
+      if(!prof){
+        header.textContent='אין משתמש פעיל. ניתן ליצור משתמש חדש או להחליף למשתמש קיים.';
+        $('#kpiSets').textContent='0'; $('#kpiAccuracy').textContent='0%'; $('#kpiAvg').textContent='0s';
+        $('#byOpGrid').innerHTML=''; $('#historyList').innerHTML='<div class="p-4 rounded-xl border-2 border-gray-200 bg-gray-50 text-gray-600">אין היסטוריית סטים עדיין.</div>';
+        return;
+      }
+      header.innerHTML=`משתמש פעיל: <span class="font-bold text-gray-900">${escapeHtml(prof.name)}</span>`;
+      const tot=prof.totals||{sets:0,questions:0,correct:0,timeSec:0};
+      const acc=tot.questions>0?Math.round((tot.correct/tot.questions)*100):0;
+      const avg=tot.questions>0?Math.round(tot.timeSec/tot.questions):0;
+      $('#kpiSets').textContent=String(tot.sets||0);
+      $('#kpiAccuracy').textContent=acc+'%';
+      $('#kpiAvg').textContent=(avg||0)+'s';
+
+      const ops=['addition','subtraction','multiplication','division','mixed'];
+      const labels={addition:'➕ חיבור',subtraction:'➖ חיסור',multiplication:'✖️ כפל',division:'➗ חילוק',mixed:'🎲 הכל'};
+      const grid=$('#byOpGrid'); grid.innerHTML='';
+      ops.forEach(op=>{
+        const b=prof.breakdown?.[op]; const s=b?.sets||0,q=b?.questions||0,c=b?.correct||0,a=q?Math.round(c/q*100):0;
+        const card=document.createElement('div');
+        card.className='p-4 rounded-2xl border-2 border-gray-200 bg-gray-50';
+        card.innerHTML=`<div class="font-bold mb-2">${labels[op]}</div>
+          <div class="text-sm text-gray-600 mb-1">סטים: <span class="ltr">${s}</span></div>
+          <div class="text-sm text-gray-600 mb-1">דיוק: <span class="ltr">${a}%</span></div>
+          <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden"><div style="width:${a}%" class="h-2 bg-blue-500"></div></div>`;
+        grid.appendChild(card);
+      });
+
+      const h=prof.history||[]; const list=$('#historyList'); list.innerHTML='';
+      if(h.length===0){
+        list.innerHTML='<div class="p-4 rounded-xl border-2 border-gray-200 bg-gray-50 text-gray-600">אין היסטוריית סטים עדיין.</div>';
+      }else{
+        h.slice(0,12).forEach(item=>{
+          const pct=Math.round((item.correct/item.count)*100);
+          const row=document.createElement('div');
+          row.className='p-3 border-2 border-gray-200 rounded-xl bg-white flex items-center justify-between gap-3';
+          const date=new Date(item.ts).toLocaleString('he-IL',{dateStyle:'short',timeStyle:'short'});
+          row.innerHTML=`<div>
+              <div class="text-sm text-gray-500">${date}</div>
+              <div class="text-gray-800">${(curricula[item.curriculum]?.name)||'ללא תוכנית'} · ${item.op==='mixed'?'הכל':labels[item.op]?.replace(/^[^ ]+ /,'')}</div>
+              <div class="text-sm text-gray-500">רמה: ${item.diff} · שאלות: ${item.count}</div>
+            </div>
+            <div class="text-right">
+              <div class="text-xl font-extrabold ${pct===100?'text-green-600':pct>=60?'text-blue-600':'text-orange-600'} ltr">${pct}%</div>
+              <div class="text-sm text-gray-500">טעויות: ${item.mistakesCount}</div>
+            </div>`;
+          list.appendChild(row);
+        });
+      }
+    }
+
+    /* ========= Robust wiring for difficulty ========= */
+    function wireDifficultyButtons(){
+      $$('#difficultyScreen .diff-btn').forEach(btn=>{
+        if(btn.dataset.wired==='1') return;
+        btn.dataset.wired='1';
+        btn.addEventListener('click',()=>{
+          const diff=btn.getAttribute('data-diff');
+          currentDifficulty=diff;
+          startGame(diff);
+        });
+        btn.addEventListener('keydown',(e)=>{
+          if(e.key==='Enter'||e.key===' '){ e.preventDefault(); btn.click(); }
+        });
+      });
+    }
+
+    /* ========= Bindings ========= */
+    function bindNavigationAndActions(){
+      $('#startBtn')?.addEventListener('click',e=>{ e.preventDefault(); unlockAudioOnce(); showNameInput(); });
+      $('#nameForm')?.addEventListener('submit',e=>{ e.preventDefault(); unlockAudioOnce(); showCurriculumSelect(); });
+
+      $('#profileOrSwitchBtn')?.addEventListener('click',()=>{ const arr=coreStore.profilesArr(); if(arr.length>1) showUserPicker(); else showProfile(); });
+
+      $('#userPickerCancel')?.addEventListener('click',()=>{ $('#userPickerModal').classList.add('hidden'); lastFocusEl&&lastFocusEl.focus(); });
+      $('#newUserBtn')?.addEventListener('click',()=>{ $('#userPickerModal').classList.add('hidden'); $('#playerName').value=''; $('#playerName').focus(); });
+
+      $('#profileBtn')?.addEventListener('click',()=> showProfile());
+      $('#profileFromResultsBtn')?.addEventListener('click',()=> showProfile());
+
+      $('#profileStartBtn')?.addEventListener('click',()=>{
+        const prof=coreStore.getActive();
+        if(!prof){ showNameInput(); return; }
+        playerName=prof.name;
+        showCurriculumSelect();
+      });
+      $('#profileSwitchBtn')?.addEventListener('click',()=>{ if(coreStore.profilesArr().length>1) showUserPicker(); });
+      $('#profileNewBtn')?.addEventListener('click',()=>{ coreStore.resetActive(); showNameInput(); });
+
+      selectChoice('#curriculumGrid','.choice-card',(btn)=>{ currentCurriculum=btn.getAttribute('data-value'); const next=$('#curriculumNext'); next.disabled=false; next.setAttribute('aria-disabled','false'); });
+      $('#curriculumNext')?.addEventListener('click',()=> showOperationSelect());
+      $('#curriculumMore')?.addEventListener('click',()=> setCurriculumExpanded(!isCurriculumExpanded));
+      window.addEventListener('resize',refreshCurriculumOverflow);
+
+      selectChoice('#opsGrid','.op-btn',(btn)=>{ currentOperation=btn.getAttribute('data-op'); updateOperationNextState(); });
+      selectChoice('#questionChips','.chip',(chip)=>{ questionCount=parseInt(chip.getAttribute('data-count'),10); updateOperationNextState(); });
+      $('#operationNext')?.addEventListener('click',()=> showDifficultySelect());
+
+      selectChoice('#difficultyScreen','.diff-btn',(btn)=>{ currentDifficulty=btn.getAttribute('data-diff'); });
+      wireDifficultyButtons();
+
+      bindAnswerGrid();
+      $('#confirmButton')?.addEventListener('click',confirmAnswer);
+      $('#restartBtn')?.addEventListener('click',()=> showNameInput());
+
+      $('#retryBtn')?.addEventListener('click',()=>{
+        if(!currentOperation||!questionCount||!currentDifficulty){ showOperationSelect(); }
+        else{ startGame(currentDifficulty); }
+      });
+      $('#mistakesButton')?.addEventListener('click',()=> showMistakes());
+      $('#altBtn')?.addEventListener('click',()=> showOperationSelect());
+
+      $('#backToResults')?.addEventListener('click',()=> showResults());
+      $('#restartFromMistakes')?.addEventListener('click',()=> showNameInput());
+      $('#backToMistakes')?.addEventListener('click',()=> showMistakes());
+      $('#restartFromTutorial')?.addEventListener('click',()=> showNameInput());
+    }
+
+    function init(){
+      coreStore.init();
+      initAudio('mspr_sound_muted');
+      bindNavigationAndActions();
+      showScreens(SCREENS,'welcomeScreen');
+    }
+
+    document.addEventListener('DOMContentLoaded',init);
+  </script>
+</body>
+</html>

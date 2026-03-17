@@ -1,0 +1,180 @@
+/* ===== core.css — yaroni studio educational platform ===== */
+/* Shared design system for all subject apps                  */
+
+/* ===== Fonts ===== */
+@import url('https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap');
+
+/* ===== Design Tokens ===== */
+:root {
+  --ink: #1f2937;
+  --ink-soft: #6b7280;
+  --card: #ffffff;
+  --muted: #e5e7eb;
+  --accent: #3b82f6;
+  --accent-2: #22c55e;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+  --radius: 16px;
+  --shadow: 0 10px 26px rgba(0,0,0,.12);
+}
+
+/* ===== Base ===== */
+body {
+  font-family: 'Assistant', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  color: var(--ink);
+}
+
+/* ===== Accessibility ===== */
+.no-focus-outline:focus { outline: none !important; box-shadow: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+/* ===== Direction helpers ===== */
+.ltr { direction: ltr; unicode-bidi: embed; display: inline-block; }
+.tabular-nums { font-variant-numeric: tabular-nums; }
+
+/* ===== Typography ===== */
+.subhead {
+  font-weight: 700;
+  font-size: clamp(1.1rem, .95rem + .8vw, 1.375rem);
+  line-height: 1.3;
+  color: #374151;
+}
+
+/* ===== Cards & Selectable Items ===== */
+.choice-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .25rem;
+  background: #fff;
+  border: 2px solid transparent;
+  border-radius: 1.25rem;
+  padding: 1.15rem;
+  box-shadow: var(--shadow);
+  transition: .18s;
+  cursor: pointer;
+  outline: none;
+  user-select: none;
+  min-height: 92px;
+  text-decoration: none;
+  color: inherit;
+}
+.choice-card:hover  { transform: translateY(-2px); }
+.choice-card:active { transform: scale(.98); }
+.choice-card.selected { border-color: #2563eb; box-shadow: 0 12px 30px rgba(0,0,0,.18); }
+.choice-card .emoji { font-size: 2rem; }
+
+.chip {
+  min-width: 68px;
+  min-height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #e5e7eb;
+  background: white;
+  border-radius: 1rem;
+  padding: .3rem .85rem;
+  font-weight: 700;
+  font-size: 1.175rem;
+  cursor: pointer;
+  transition: .16s;
+}
+.chip:hover    { transform: translateY(-2px); }
+.chip.selected { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.20); }
+
+.chips { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: center; }
+
+/* ===== Answer Items ===== */
+.answer-item {
+  position: relative;
+  transition: transform .14s, box-shadow .14s, border-color .14s;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  background: rgba(255,255,255,.98);
+  border-radius: 1rem;
+  border: 2px solid transparent;
+  outline: none;
+  min-height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.answer-item:active   { transform: scale(.98); }
+.answer-item.selected { border-color: #2563eb; box-shadow: 0 12px 30px rgba(0,0,0,.18); }
+
+/* Text inside answer items (used by madaonchik for RTL/LTR detection) */
+.answer-text { width: 100%; text-align: center; font-size: 1.25rem; font-weight: 600; line-height: 1.5; word-break: break-word; hyphens: auto; }
+.answer-text.ltr { direction: ltr; unicode-bidi: embed; }
+.answer-text.rtl { direction: rtl; unicode-bidi: embed; }
+
+/* ===== Buttons ===== */
+.confirm-button { transition: all .25s; }
+.confirm-button[disabled] { opacity: .5; cursor: not-allowed; }
+.btn-disabled { opacity: .5; cursor: not-allowed; }
+
+/* ===== Links / CTAs ===== */
+.link-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .35rem;
+  margin: .5rem auto 1rem;
+  font-weight: 800;
+  font-size: calc(1rem + 1px);
+  color: #111827;
+  text-decoration: underline;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: .25rem .5rem;
+  border-radius: .5rem;
+}
+.link-cta:focus { outline: 2px solid #93c5fd; outline-offset: 2px; }
+
+/* ===== Floating Controls ===== */
+#floatingControls {
+  position: fixed;
+  left: 16px;
+  top: 16px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+#audioToggle,
+#profileBtn {
+  padding: .5rem .7rem;
+  border-radius: 9999px;
+  background: rgba(255,255,255,.95);
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 6px 20px rgba(0,0,0,.12);
+  font-size: 20px;
+  cursor: pointer;
+}
+#audioToggle:focus,
+#profileBtn:focus { outline: 2px solid #93c5fd; outline-offset: 2px; }
+
+/* ===== Site Signature (footer) ===== */
+.site-signature {
+  text-align: center;
+  color: #6b7280;
+  font-size: .925rem;
+  line-height: 1.6;
+  margin: 1.5rem auto;
+}
+@media (min-width: 640px) { .site-signature { font-size: 1rem; margin: 2rem auto; } }
+.site-signature a       { color: #4b5563; text-decoration: underline; }
+.site-signature a:hover { color: #111827; }
+
+/* ===== Progress bar (shared structure) ===== */
+#progressBar { transition: width .3s ease; }
+
+/* ===== Reduced motion ===== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

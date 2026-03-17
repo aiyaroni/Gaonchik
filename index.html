@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>yaroni studio — כלי לימוד</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="core.css">
+  <style>
+    .hub-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: .5rem;
+      background: #fff;
+      border: 2px solid transparent;
+      border-radius: 1.5rem;
+      padding: 2.5rem 2rem;
+      box-shadow: var(--shadow);
+      transition: transform .2s, box-shadow .2s, border-color .2s;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      min-height: 200px;
+    }
+    .hub-card:hover  { transform: translateY(-4px); box-shadow: 0 18px 40px rgba(0,0,0,.16); border-color: #c4b5fd; }
+    .hub-card:focus  { outline: 3px solid #818cf8; outline-offset: 3px; }
+    .hub-card:active { transform: scale(.97); }
+    .hub-card .card-emoji { font-size: 3.5rem; margin-bottom: .5rem; }
+    .hub-card .card-title { font-size: 1.75rem; font-weight: 800; color: #1f2937; }
+    .hub-card .card-desc  { font-size: 1rem; color: #6b7280; font-weight: 500; }
+    .hub-badge {
+      display: inline-block;
+      padding: .2rem .65rem;
+      border-radius: 9999px;
+      font-size: .8rem;
+      font-weight: 700;
+      margin-top: .35rem;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-blue-100 via-purple-50 to-green-100 min-h-screen flex flex-col items-center justify-center p-6">
+
+  <main class="text-center max-w-3xl w-full">
+    <!-- Logo / Header -->
+    <div class="mb-10">
+      <div class="text-7xl mb-4">🦉</div>
+      <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-2">כלי הלימוד של שופי</h1>
+      <p class="text-xl text-gray-600 font-medium">בחרו את הנושא שרוצים לתרגל</p>
+    </div>
+
+    <!-- Subject Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10">
+
+      <a href="misparonchikV2.html" class="hub-card" aria-label="מספרונצ'יק — משחק חשבון לימודי">
+        <div class="card-emoji">🔢</div>
+        <div class="card-title">מספרונצ'יק</div>
+        <div class="card-desc">תרגולי חשבון עם שופי</div>
+        <span class="hub-badge bg-purple-100 text-purple-700">חיבור · חיסור · כפל · חילוק</span>
+      </a>
+
+      <a href="madaonchik.html" class="hub-card" aria-label="מדעונצ'יק — חידון מדע ופיזיקה">
+        <div class="card-emoji">🔬</div>
+        <div class="card-title">מדעונצ'יק</div>
+        <div class="card-desc">חידוני מדע עם שופי</div>
+        <span class="hub-badge bg-green-100 text-green-700">פיזיקה · חומר · חלל · אנרגיה</span>
+      </a>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="site-signature">
+      <div>© 2025 yaroni studio - תוכן חזק, עובד חכם ומבוסס על בינה</div>
+      <a href="mailto:hello@yaronistudio.com" dir="ltr">hello@yaronistudio.com</a>
+    </footer>
+  </main>
+
+</body>
+</html>
