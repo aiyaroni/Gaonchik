@@ -40,13 +40,107 @@
     #audioToggle[aria-pressed="false"] .muted   { display:none;   }
     #audioToggle[aria-pressed="false"] .unmuted { display:inline; }
 
-    /* Curriculum overflow collapse */
+    /* Curriculum overflow collapse — disabled for path layout */
     #curriculumWrapper { position:relative; }
-    .curriculum-collapsed { max-height:min(45vh, 360px); overflow:hidden; }
+    .curriculum-collapsed { /* no-op: path shows all stations */ }
     #curriculumFade {
       position:absolute; inset-inline:0; bottom:0; height:64px;
       background:linear-gradient(to top, rgba(255,255,255,1), rgba(255,255,255,0));
       pointer-events:none;
+    }
+
+    /* ===== Shoppy speech bubble ===== */
+    .shoppy-speech {
+      position: relative;
+      display: inline-block;
+      background: #eff6ff;
+      border: 2px solid #bfdbfe;
+      border-radius: 1.25rem;
+      padding: .45rem 1.1rem;
+      font-weight: 700;
+      font-size: .92rem;
+      color: #1d4ed8;
+      margin-top: .4rem;
+      max-width: 260px;
+      text-align: center;
+    }
+    .shoppy-speech::before {
+      content: '';
+      position: absolute;
+      top: -11px;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-bottom-color: #bfdbfe;
+    }
+    .shoppy-speech::after {
+      content: '';
+      position: absolute;
+      top: -7px;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-bottom-color: #eff6ff;
+    }
+
+    /* ===== Shoppy sign (gender screen) ===== */
+    .shoppy-sign {
+      display: inline-block;
+      background: #fef3c7;
+      border: 2px solid #fbbf24;
+      border-radius: 1rem;
+      padding: .4rem 1.1rem;
+      font-weight: 800;
+      font-size: .9rem;
+      color: #92400e;
+      margin-top: .4rem;
+      box-shadow: 0 2px 0 #f59e0b;
+    }
+
+    /* ===== Path / Trail for curriculum ===== */
+    .path-connector {
+      width: 3px;
+      height: 26px;
+      margin: 0 auto;
+      border-radius: 2px;
+      background: repeating-linear-gradient(
+        to bottom,
+        #d1fae5 0, #d1fae5 5px,
+        transparent 5px, transparent 10px
+      );
+    }
+    #curriculumGrid {
+      display: flex;
+      flex-direction: column;
+    }
+    #curriculumGrid .choice-card {
+      flex-direction: row;
+      justify-content: flex-start;
+      align-items: center;
+      text-align: right;
+      gap: .875rem;
+      min-height: 68px;
+      padding: .8rem 1.1rem;
+    }
+    .station-icon {
+      flex-shrink: 0;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.55rem;
+      background: #f3f4f6;
+    }
+    #curriculumGrid .choice-card[data-tint="green"]  .station-icon { background: #dcfce7; }
+    #curriculumGrid .choice-card[data-tint="blue"]   .station-icon { background: #dbeafe; }
+    #curriculumGrid .choice-card[data-tint="purple"] .station-icon { background: #f3e8ff; }
+    #curriculumGrid .choice-card[data-tint="orange"] .station-icon { background: #fef3c7; }
+    /* Mobile: slightly smaller icon to give text more room */
+    @media (max-width: 400px) {
+      .station-icon { width: 38px; height: 38px; font-size: 1.25rem; }
+      #curriculumGrid .choice-card { gap: .6rem; padding: .7rem .9rem; min-height: 60px; }
     }
   </style>
 </head>
@@ -77,15 +171,23 @@
 
   <!-- Name -->
   <div id="nameScreen" class="hidden flex flex-col items-center justify-center min-h-screen p-6">
-    <form id="nameForm" class="text-center bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
-      <div class="text-5xl mb-4">👋</div>
+    <form id="nameForm" novalidate class="text-center bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
+      <!-- Shoppy with speech bubble -->
+      <div class="flex flex-col items-center mb-5">
+        <div class="text-7xl owl-blink">🦉</div>
+        <div class="shoppy-speech">היי! אני שופי הינשוף 👋</div>
+      </div>
       <h2 id="nameTitle" tabindex="-1" class="no-focus-outline text-3xl font-bold text-blue-600 mb-2">איך קוראים לך?</h2>
-      <p id="nameSubtitle" class="text-gray-600 mb-4 hidden"></p>
-      <input type="text" id="playerName" name="playerName" required placeholder="הכנס את שמך כאן" class="w-full p-4 text-xl border-2 border-gray-300 rounded-xl mb-3 text-center focus:border-blue-500 focus:outline-none">
-      <div class="text-center mb-6">
+      <p id="nameSubtitle" class="text-gray-600 mb-3 hidden"></p>
+      <!-- Custom validation error (replaces browser tooltip) -->
+      <div id="nameError" class="hidden bg-red-50 border-2 border-red-200 text-red-600 font-bold rounded-2xl px-4 py-3 mb-3 text-base" role="alert">
+        שופי מחכה לשם שלך 😊
+      </div>
+      <input type="text" id="playerName" name="playerName" placeholder="הכנס את שמך כאן" autocomplete="given-name" class="w-full p-4 text-xl border-2 border-gray-300 rounded-xl mb-3 text-center focus:border-blue-500 focus:outline-none">
+      <div class="text-center mb-5">
         <button type="button" id="profileOrSwitchBtn" class="link-cta">החלף משתמש / אזור אישי</button>
       </div>
-      <button type="submit" class="bg-gradient-to-r from-blue-500 to-green-500 text-white px-8 py-4 rounded-full text-xl font-bold hover:from-blue-600 hover:to-green-600 transform hover:scale-105 transition-all duration-200 shadow-lg">המשך</button>
+      <button type="submit" class="btn-duo btn-duo-blue">המשך</button>
     </form>
   </div>
 
@@ -104,7 +206,11 @@
   <!-- Gender -->
   <div id="genderScreen" class="hidden flex flex-col items-center justify-center min-h-screen p-6">
     <div class="text-center bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
-      <div class="text-5xl mb-4">👤</div>
+      <!-- Shoppy holding a sign -->
+      <div class="flex flex-col items-center mb-6">
+        <div class="text-8xl owl-blink">🦉</div>
+        <div class="shoppy-sign">📋 ספר/י לי קצת על עצמך</div>
+      </div>
       <h2 id="genderTitle" tabindex="-1" class="no-focus-outline text-3xl font-extrabold text-purple-600 mb-6">אתה ילד או ילדה?</h2>
       <div class="grid grid-cols-2 gap-6">
         <button type="button" id="genderBoyBtn" class="choice-card py-8" data-gender="m">
@@ -120,63 +226,97 @@
   </div>
 
   <!-- Curriculum -->
-  <div id="curriculumScreen" class="hidden flex flex-col items-center justify-center min-h-screen p-6">
-    <div class="text-center bg-white rounded-3xl shadow-2xl p-8 max-w-3xl w-full">
-      <div class="text-5xl mb-4">📚</div>
-      <h2 id="curriculumTitle" tabindex="-1" class="no-focus-outline text-3xl md:text-4xl font-extrabold text-green-600 mb-2 leading-tight">יש לבחור תכנית לימוד</h2>
-      <p class="subhead mb-6">בחרו את התכנית המתאימה, ואז לחצו על "המשך"</p>
+  <div id="curriculumScreen" class="hidden flex flex-col items-center justify-center min-h-screen p-4 sm:p-6">
+    <div class="text-center bg-white rounded-3xl shadow-2xl p-5 sm:p-8 max-w-lg w-full">
+      <div class="text-5xl mb-4">🗺️</div>
+      <h2 id="curriculumTitle" tabindex="-1" class="no-focus-outline text-3xl md:text-4xl font-extrabold text-green-600 mb-2 leading-tight">בחרו את התחנה שלכם</h2>
+      <p class="subhead mb-6">לחצו על התחנה המתאימה, ואז לחצו על "המשך"</p>
 
       <div id="curriculumWrapper" class="relative mb-6">
-        <div id="curriculumGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 curriculum-collapsed">
+        <div id="curriculumGrid">
+
           <button type="button" class="choice-card" data-tint="blue" data-value="none" aria-pressed="false">
             <span class="accent" aria-hidden="true"></span>
-            <div class="emoji">🎯</div>
-            <div class="text-xl font-bold text-gray-800">ללא תוכנית</div>
-            <div class="text-base text-gray-500">בחירה חופשית</div>
+            <div class="station-icon">🎯</div>
+            <div class="flex-1 text-right">
+              <div class="text-lg font-bold text-gray-800">ללא תוכנית</div>
+              <div class="text-sm text-gray-500">בחירה חופשית</div>
+            </div>
           </button>
+
+          <div class="path-connector" aria-hidden="true"></div>
+
           <button type="button" class="choice-card" data-tint="green" data-value="il_g1_s1" aria-pressed="false">
             <span class="accent" aria-hidden="true"></span>
-            <div class="emoji">🌱</div>
-            <div class="text-xl font-bold text-gray-800">כיתה א׳, מחצית א׳</div>
-            <div class="text-base text-gray-500">עד 10</div>
+            <div class="station-icon">🌱</div>
+            <div class="flex-1 text-right">
+              <div class="text-lg font-bold text-gray-800">כיתה א׳, מחצית א׳</div>
+              <div class="text-sm text-gray-500">עד 10</div>
+            </div>
           </button>
+
+          <div class="path-connector" aria-hidden="true"></div>
+
           <button type="button" class="choice-card" data-tint="green" data-value="il_g1_s2" aria-pressed="false">
             <span class="accent" aria-hidden="true"></span>
-            <div class="emoji">🌿</div>
-            <div class="text-xl font-bold text-gray-800">כיתה א׳, מחצית ב׳</div>
-            <div class="text-base text-gray-500">עד 20</div>
+            <div class="station-icon">🌿</div>
+            <div class="flex-1 text-right">
+              <div class="text-lg font-bold text-gray-800">כיתה א׳, מחצית ב׳</div>
+              <div class="text-sm text-gray-500">עד 20</div>
+            </div>
           </button>
+
+          <div class="path-connector" aria-hidden="true"></div>
+
           <button type="button" class="choice-card" data-tint="green" data-value="il_g1_adv" aria-pressed="false">
             <span class="accent" aria-hidden="true"></span>
-            <div class="emoji">✨</div>
-            <div class="text-xl font-bold text-gray-800">כיתה א׳, אתגר</div>
-            <div class="text-base text-gray-500">עד 30</div>
+            <div class="station-icon">✨</div>
+            <div class="flex-1 text-right">
+              <div class="text-lg font-bold text-gray-800">כיתה א׳, אתגר</div>
+              <div class="text-sm text-gray-500">עד 30</div>
+            </div>
           </button>
+
+          <div class="path-connector" aria-hidden="true"></div>
+
           <button type="button" class="choice-card" data-tint="blue" data-value="il_g2" aria-pressed="false">
             <span class="accent" aria-hidden="true"></span>
-            <div class="emoji">🧩</div>
-            <div class="text-xl font-bold text-gray-800">כיתה ב׳</div>
-            <div class="text-base text-gray-500">עד 100</div>
+            <div class="station-icon">🧩</div>
+            <div class="flex-1 text-right">
+              <div class="text-lg font-bold text-gray-800">כיתה ב׳</div>
+              <div class="text-sm text-gray-500">עד 100</div>
+            </div>
           </button>
+
+          <div class="path-connector" aria-hidden="true"></div>
+
           <button type="button" class="choice-card" data-tint="purple" data-value="il_g3" aria-pressed="false">
             <span class="accent" aria-hidden="true"></span>
-            <div class="emoji">✖️</div>
-            <div class="text-xl font-bold text-gray-800">כיתה ג׳</div>
-            <div class="text-base text-gray-500">עד 100; כפל/חילוק 10×10</div>
+            <div class="station-icon">✖️</div>
+            <div class="flex-1 text-right">
+              <div class="text-lg font-bold text-gray-800">כיתה ג׳</div>
+              <div class="text-sm text-gray-500">עד 100; כפל/חילוק 10×10</div>
+            </div>
           </button>
+
+          <div class="path-connector" aria-hidden="true"></div>
+
           <button type="button" class="choice-card" data-tint="orange" data-value="il_g4" aria-pressed="false">
             <span class="accent" aria-hidden="true"></span>
-            <div class="emoji">🚀</div>
-            <div class="text-xl font-bold text-gray-800">כיתה ד׳</div>
-            <div class="text-base text-gray-500">עד 1000; כפל/חילוק 12×12</div>
+            <div class="station-icon">🚀</div>
+            <div class="flex-1 text-right">
+              <div class="text-lg font-bold text-gray-800">כיתה ד׳</div>
+              <div class="text-sm text-gray-500">עד 1,000; כפל/חילוק 12×12</div>
+            </div>
           </button>
+
         </div>
         <div id="curriculumFade" class="hidden"></div>
       </div>
 
       <div class="flex items-center justify-center gap-3 flex-wrap">
         <button id="curriculumMore" type="button" class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 font-bold hidden" aria-expanded="false">הצג עוד</button>
-        <button id="curriculumNext" class="confirm-button bg-gradient-to-r from-green-500 to-blue-500 text-white px-8 py-4 rounded-full text-xl font-bold shadow-lg disabled:opacity-50" disabled aria-disabled="true">המשך</button>
+        <button id="curriculumNext" class="confirm-button btn-duo btn-duo-green" disabled aria-disabled="true">המשך</button>
       </div>
     </div>
   </div>
@@ -578,7 +718,12 @@
       if(profBefore&&profBefore.name) name=profBefore.name.trim();
       else{
         const inp=$('#playerName'); const typed=(inp?.value||'').trim();
-        if(!typed){ alert('אנא הכנס את שמך'); inp?.focus(); return; }
+        if(!typed){
+          const err=$('#nameError');
+          if(err) err.classList.remove('hidden');
+          inp?.focus();
+          return;
+        }
         name=typed;
       }
       playerName=name;
@@ -626,7 +771,6 @@
 
     function startGame(diff){
       try{
-        hideContextBar();
         $('#feedback')?.classList.add('hidden');
         const nb=$('#nextButton'); if(nb) nb.onclick=null;
         currentDifficulty=diff; currentQuestionIndex=0; correctCount=0; totalTime=0; mistakes=[]; selectedAnswer=null;
@@ -1077,6 +1221,7 @@
     function bindNavigationAndActions(){
       $('#startBtn')?.addEventListener('click',e=>{ e.preventDefault(); unlockAudioOnce(); showNameInput(); });
       $('#nameForm')?.addEventListener('submit',e=>{ e.preventDefault(); unlockAudioOnce(); checkGenderThenCurriculum(); });
+      $('#playerName')?.addEventListener('input',()=>{ $('#nameError')?.classList.add('hidden'); });
 
       $('#genderBoyBtn')?.addEventListener('click',()=>{ coreStore.setGenderForActive('m'); setGender('m'); showCurriculumSelect(); });
       $('#genderGirlBtn')?.addEventListener('click',()=>{ coreStore.setGenderForActive('f'); setGender('f'); showCurriculumSelect(); });
