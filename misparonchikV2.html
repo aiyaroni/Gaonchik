@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>מספרונצ'יק - משחק חשבון לימודי</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="core.css">
+  <link rel="stylesheet" href="css/core.css">
   <style>
     /* === misparonchik-specific styles === */
 
@@ -97,6 +97,24 @@
       <div class="flex gap-2 justify-between">
         <button id="userPickerCancel" class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 font-bold">סגור</button>
         <button id="newUserBtn" class="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700">משתמש חדש</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gender -->
+  <div id="genderScreen" class="hidden flex flex-col items-center justify-center min-h-screen p-6">
+    <div class="text-center bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
+      <div class="text-5xl mb-4">👤</div>
+      <h2 id="genderTitle" tabindex="-1" class="no-focus-outline text-3xl font-extrabold text-purple-600 mb-6">אתה ילד או ילדה?</h2>
+      <div class="grid grid-cols-2 gap-6">
+        <button type="button" id="genderBoyBtn" class="choice-card py-8" data-gender="m">
+          <div class="text-5xl mb-2">👦</div>
+          <div class="text-xl font-extrabold text-gray-800">ילד</div>
+        </button>
+        <button type="button" id="genderGirlBtn" class="choice-card py-8" data-gender="f">
+          <div class="text-5xl mb-2">👧</div>
+          <div class="text-xl font-extrabold text-gray-800">ילדה</div>
+        </button>
       </div>
     </div>
   </div>
@@ -417,7 +435,7 @@
     </div>
   </div>
 
-  <script src="core.js"></script>
+  <script src="js/core.js"></script>
   <script>
     /* ========= CoreStore init ========= */
     const coreStore = CoreStore('mspr_profiles_v1', 1);
@@ -430,7 +448,7 @@
     let activeMistake=null;
     let lastFocusEl=null;
 
-    const SCREENS=['welcomeScreen','nameScreen','curriculumScreen','operationScreen','difficultyScreen','gameScreen','resultsScreen','mistakesScreen','tutorialScreen','profileScreen'];
+    const SCREENS=['welcomeScreen','nameScreen','genderScreen','curriculumScreen','operationScreen','difficultyScreen','gameScreen','resultsScreen','mistakesScreen','tutorialScreen','profileScreen'];
 
     /* ========= Rules ========= */
     const rulesByDifficulty={
@@ -554,10 +572,10 @@
       trapDialog('#userPickerModal',()=>{ lastFocusEl&&lastFocusEl.focus(); });
     }
 
-    function showCurriculumSelect(){
+    function checkGenderThenCurriculum(){
       let name='';
-      const prof=coreStore.getActive();
-      if(prof&&prof.name) name=prof.name.trim();
+      const profBefore=coreStore.getActive();
+      if(profBefore&&profBefore.name) name=profBefore.name.trim();
       else{
         const inp=$('#playerName'); const typed=(inp?.value||'').trim();
         if(!typed){ alert('אנא הכנס את שמך'); inp?.focus(); return; }
@@ -565,6 +583,19 @@
       }
       playerName=name;
       coreStore.ensureByName(name);
+      const prof=coreStore.getActive();
+      if(prof&&prof.gender){
+        setGender(prof.gender);
+        showCurriculumSelect();
+      } else {
+        showScreens(SCREENS,'genderScreen');
+        focusTop('#genderTitle');
+      }
+    }
+
+    function showCurriculumSelect(){
+      const prof=coreStore.getActive();
+      if(prof&&prof.name) playerName=prof.name.trim();
 
       showScreens(SCREENS,'curriculumScreen');
       currentCurriculum=null;
@@ -595,6 +626,7 @@
 
     function startGame(diff){
       try{
+        hideContextBar();
         $('#feedback')?.classList.add('hidden');
         const nb=$('#nextButton'); if(nb) nb.onclick=null;
         currentDifficulty=diff; currentQuestionIndex=0; correctCount=0; totalTime=0; mistakes=[]; selectedAnswer=null;
@@ -706,6 +738,7 @@
     }
 
     function showResults(){
+      showContextBar();
       showScreens(SCREENS,'resultsScreen');
       const incorrect=totalQuestions-correctCount;
       const pct=Math.round((correctCount/totalQuestions)*100);
@@ -968,7 +1001,7 @@
     }
 
     /* ========= Profile ========= */
-    function showProfile(){ showScreens(SCREENS,'profileScreen'); renderProfile(); focusTop('#profileScreen .text-indigo-600'); updateStatus(''); }
+    function showProfile(){ showContextBar(); showScreens(SCREENS,'profileScreen'); renderProfile(); focusTop('#profileScreen .text-indigo-600'); updateStatus(''); }
     function setSwitchBtnDisabled(disabled){ const btn=$('#profileSwitchBtn'); if(!btn) return; btn.disabled=disabled; btn.classList.toggle('btn-disabled',disabled); }
     function renderProfile(){
       const prof=coreStore.getActive(); const header=$('#profileHeader'); const totalUsers=coreStore.profilesArr().length;
@@ -1043,7 +1076,10 @@
     /* ========= Bindings ========= */
     function bindNavigationAndActions(){
       $('#startBtn')?.addEventListener('click',e=>{ e.preventDefault(); unlockAudioOnce(); showNameInput(); });
-      $('#nameForm')?.addEventListener('submit',e=>{ e.preventDefault(); unlockAudioOnce(); showCurriculumSelect(); });
+      $('#nameForm')?.addEventListener('submit',e=>{ e.preventDefault(); unlockAudioOnce(); checkGenderThenCurriculum(); });
+
+      $('#genderBoyBtn')?.addEventListener('click',()=>{ coreStore.setGenderForActive('m'); setGender('m'); showCurriculumSelect(); });
+      $('#genderGirlBtn')?.addEventListener('click',()=>{ coreStore.setGenderForActive('f'); setGender('f'); showCurriculumSelect(); });
 
       $('#profileOrSwitchBtn')?.addEventListener('click',()=>{ const arr=coreStore.profilesArr(); if(arr.length>1) showUserPicker(); else showProfile(); });
 
@@ -1057,7 +1093,8 @@
         const prof=coreStore.getActive();
         if(!prof){ showNameInput(); return; }
         playerName=prof.name;
-        showCurriculumSelect();
+        if(prof.gender){ setGender(prof.gender); showCurriculumSelect(); }
+        else checkGenderThenCurriculum();
       });
       $('#profileSwitchBtn')?.addEventListener('click',()=>{ if(coreStore.profilesArr().length>1) showUserPicker(); });
       $('#profileNewBtn')?.addEventListener('click',()=>{ coreStore.resetActive(); showNameInput(); });
@@ -1094,6 +1131,10 @@
     function init(){
       coreStore.init();
       initAudio('mspr_sound_muted');
+      renderContextBar([
+        { key:'mspr', label:"מספרונצ'יק", emoji:'🔢', href:'misparonchikV2.html' },
+        { key:'mdnc', label:"מדעונצ'יק",  emoji:'🔬', href:'madaonchik.html'     }
+      ], 'mspr');
       bindNavigationAndActions();
       showScreens(SCREENS,'welcomeScreen');
     }

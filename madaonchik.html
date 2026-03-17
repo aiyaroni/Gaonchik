@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>מדעונצ'יק - חידון מדע ופיזיקה</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="core.css">
+  <link rel="stylesheet" href="css/core.css">
   <style>
     /* === madaonchik-specific styles === */
 
@@ -69,6 +69,24 @@
       <div class="flex gap-2 justify-between">
         <button id="userPickerCancel" class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 font-bold">סגור</button>
         <button id="newUserBtn"       class="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700">משתמש חדש</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gender -->
+  <div id="genderScreen" class="hidden flex flex-col items-center justify-center min-h-screen p-6">
+    <div class="text-center bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
+      <div class="text-5xl mb-4">👤</div>
+      <h2 id="genderTitle" tabindex="-1" class="no-focus-outline text-3xl font-extrabold text-purple-600 mb-6">אתה ילד או ילדה?</h2>
+      <div class="grid grid-cols-2 gap-6">
+        <button type="button" id="genderBoyBtn" class="choice-card py-8" data-gender="m">
+          <div class="text-5xl mb-2">👦</div>
+          <div class="text-xl font-extrabold text-gray-800">ילד</div>
+        </button>
+        <button type="button" id="genderGirlBtn" class="choice-card py-8" data-gender="f">
+          <div class="text-5xl mb-2">👧</div>
+          <div class="text-xl font-extrabold text-gray-800">ילדה</div>
+        </button>
       </div>
     </div>
   </div>
@@ -257,7 +275,7 @@
     </div>
   </div>
 
-  <script src="core.js"></script>
+  <script src="js/core.js"></script>
   <script>
     /* ========= CoreStore init ========= */
     const coreStore = CoreStore('mdnc_profiles_v2', 2);
@@ -270,7 +288,7 @@
     let questions = [], selectedAnswer = null, startTime = 0, totalTime = 0;
     let wrongAnswers = [];
 
-    const SCREENS = ['welcomeScreen','nameScreen','topicsScreen','programScreen','settingsScreen','gameScreen','resultsScreen','mistakesScreen','profileScreen'];
+    const SCREENS = ['welcomeScreen','nameScreen','genderScreen','topicsScreen','programScreen','settingsScreen','gameScreen','resultsScreen','mistakesScreen','profileScreen'];
 
     /* ========= Topic Groups & Programs ========= */
     const TopicGroups = [
@@ -432,6 +450,7 @@
 
     /* ========= Game Flow ========= */
     function startGame(){
+      hideContextBar();
       const prof=coreStore.getActive(); playerName=prof?prof.name:playerName;
       totalQuestions=selectedCount||6; questionCount=totalQuestions;
       wrongAnswers=[];
@@ -514,6 +533,7 @@
     }
 
     function showResults(){
+      showContextBar();
       showScreens(SCREENS,'resultsScreen');
       const incorrect=totalQuestions-correctCount;
       const pct=Math.round((correctCount/totalQuestions)*100);
@@ -590,7 +610,7 @@
     }
 
     /* ========= Profile ========= */
-    function showProfile(){ showScreens(SCREENS,'profileScreen'); renderProfile(); focusTop('#profileScreen .text-indigo-600'); updateStatus(''); }
+    function showProfile(){ showContextBar(); showScreens(SCREENS,'profileScreen'); renderProfile(); focusTop('#profileScreen .text-indigo-600'); updateStatus(''); }
     function setSwitchBtnDisabled(disabled){ const btn=$('#profileSwitchBtn'); if(!btn) return; btn.disabled=disabled; btn.classList.toggle('opacity-50',disabled); btn.classList.toggle('cursor-not-allowed',disabled); }
     function renderProfile(){
       const prof=coreStore.getActive(); const header=$('#profileHeader'); const totalUsers=coreStore.profilesArr().length;
@@ -669,11 +689,24 @@
       trapDialog('#userPickerModal');
     }
 
-    function showTopics(){
-      let name=''; const prof=coreStore.getActive();
-      if(prof&&prof.name) name=prof.name.trim();
+    function checkGenderThenTopics(){
+      let name=''; const profBefore=coreStore.getActive();
+      if(profBefore&&profBefore.name) name=profBefore.name.trim();
       else{ const inp=$('#playerName'); const typed=(inp?.value||'').trim(); if(!typed){ alert('אנא הכניסו את שמכם'); inp?.focus(); return; } name=typed; }
       playerName=name; coreStore.ensureByName(name);
+      const prof=coreStore.getActive();
+      if(prof&&prof.gender){
+        setGender(prof.gender);
+        showTopics();
+      } else {
+        showScreens(SCREENS,'genderScreen');
+        focusTop('#genderTitle');
+      }
+    }
+
+    function showTopics(){
+      const prof=coreStore.getActive();
+      if(prof&&prof.name) playerName=prof.name.trim();
       showScreens(SCREENS,'topicsScreen');
       selectedTopics=new Set(); selectedProgram=null; selectedCount=null; selectedDifficulty=null;
       renderTopics();
@@ -693,7 +726,10 @@
 
     function bindUI(){
       $('#startBtn')?.addEventListener('click',e=>{ e.preventDefault(); unlockAudioOnce(); showNameInput(); });
-      $('#nameForm')?.addEventListener('submit',e=>{ e.preventDefault(); unlockAudioOnce(); showTopics(); });
+      $('#nameForm')?.addEventListener('submit',e=>{ e.preventDefault(); unlockAudioOnce(); checkGenderThenTopics(); });
+
+      $('#genderBoyBtn')?.addEventListener('click',()=>{ coreStore.setGenderForActive('m'); setGender('m'); showTopics(); });
+      $('#genderGirlBtn')?.addEventListener('click',()=>{ coreStore.setGenderForActive('f'); setGender('f'); showTopics(); });
 
       $('#profileOrSwitchBtn')?.addEventListener('click',()=>{ const arr=coreStore.profilesArr(); if(arr.length>1) showUserPicker(); else showProfile(); });
       $('#profileBtn')?.addEventListener('click',()=> showProfile());
@@ -702,7 +738,7 @@
       $('#userPickerCancel')?.addEventListener('click',()=>{ $('#userPickerModal').classList.add('hidden'); });
       $('#newUserBtn')?.addEventListener('click',()=>{ $('#userPickerModal').classList.add('hidden'); $('#playerName').value=''; $('#playerName').focus(); });
 
-      $('#profileStartBtn')?.addEventListener('click',()=>{ const prof=coreStore.getActive(); if(!prof){ showNameInput(); return; } playerName=prof.name; showTopics(); });
+      $('#profileStartBtn')?.addEventListener('click',()=>{ const prof=coreStore.getActive(); if(!prof){ showNameInput(); return; } playerName=prof.name; if(prof.gender){ setGender(prof.gender); showTopics(); } else checkGenderThenTopics(); });
       $('#profileSwitchBtn')?.addEventListener('click',()=>{ if(coreStore.profilesArr().length>1) showUserPicker(); });
       $('#profileNewBtn')?.addEventListener('click',()=>{ coreStore.resetActive(); showNameInput(); });
 
@@ -729,6 +765,10 @@
     /* ========= Init ========= */
     function init(){
       coreStore.init();
+      renderContextBar([
+        { key:'mspr', label:"מספרונצ'יק", emoji:'🔢', href:'misparonchikV2.html' },
+        { key:'mdnc', label:"מדעונצ'יק",  emoji:'🔬', href:'madaonchik.html'     }
+      ], 'mdnc');
       bindUI();
       showScreens(SCREENS,'welcomeScreen');
     }

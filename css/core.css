@@ -178,3 +178,57 @@ body {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* ===== Context Bar ===== */
+#contextBar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: .1rem;
+  padding: .3rem .75rem;
+  background: rgba(255,255,255,.96);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  font-size: .875rem;
+  font-weight: 700;
+  direction: rtl;
+}
+#contextBar.ctx-hidden { display: none !important; }
+body.has-ctx-bar { padding-top: 44px; }
+
+.ctx-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  padding: .3rem .6rem;
+  border-radius: .6rem;
+  color: #374151;
+  text-decoration: none;
+  transition: background .15s;
+  white-space: nowrap;
+}
+.ctx-btn:hover { background: #f3f4f6; }
+.ctx-btn:focus { outline: 2px solid #93c5fd; outline-offset: 2px; }
+.ctx-btn.ctx-btn-active { color: #4f46e5; background: #eef2ff; }
+.ctx-sep { color: #d1d5db; padding: 0 .15rem; font-weight: 400; }
+
+/* ===== Mobile: prevent input zoom on iOS ===== */
+@media (max-width: 767px) {
+  input[type="text"],
+  input[type="number"],
+  select,
+  textarea { font-size: 16px !important; }
+
+  .answer-item { min-height: 64px; }
+
+  .confirm-button,
+  #confirmButton {
+    padding-bottom: max(.75rem, calc(.75rem + env(safe-area-inset-bottom, 0px)));
+  }
+}

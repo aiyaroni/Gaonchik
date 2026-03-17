@@ -343,5 +343,98 @@ function CoreStore(storeKey, version) {
     save();
   }
 
-  return { init, save, profilesArr, getActive, setActive, ensureByName, logSession, resetActive };
+  function setGenderForActive(g) {
+    const prof = getActive();
+    if (!prof) return;
+    prof.gender = g === 'f' ? 'f' : (g === 'm' ? 'm' : null);
+    save();
+  }
+
+  return { init, save, profilesArr, getActive, setActive, ensureByName, logSession, resetActive, setGenderForActive };
+}
+
+/* ========= Gender & String System ========= */
+let _gender = null; // 'm' | 'f' | null
+
+function setGender(g) { _gender = g === 'f' ? 'f' : (g === 'm' ? 'm' : null); }
+function getGender() { return _gender; }
+
+const STRINGS = {
+  greeting:     { m: 'ברוך הבא',          f: 'ברוכה הבאה'          },
+  wellDone:     { m: 'כל הכבוד',           f: 'כל הכבוד'            },
+  tryAgain:     { m: 'נסה שוב',            f: 'נסי שוב'             },
+  continue_:    { m: 'המשך',              f: 'המשיכי'             },
+  correct:      { m: 'נכון! המשך',         f: 'נכון! המשיכי'        },
+  almost:       { m: 'כמעט! ממשיכים',     f: 'כמעט! ממשיכים'      },
+  chooseAnswer: { m: 'בחר תשובה ואז אשר', f: 'בחרי תשובה ואז אשרי' },
+  letsGo:       { m: 'יצאנו לדרך! בחר/י תשובה ואז אשר/י.', f: 'יצאנו לדרך! בחרי תשובה ואז אשרי.' },
+};
+
+function t(key) {
+  const entry = STRINGS[key];
+  if (!entry) return key;
+  if (_gender === 'f') return entry.f !== undefined ? entry.f : entry.m || key;
+  return entry.m || key;
+}
+
+/* ========= Age Layer ========= */
+let _ageLayer = null; // 'tiny' | 'junior' | 'mid' | 'senior' | null
+
+function setAgeLayer(layer) {
+  const valid = ['tiny', 'junior', 'mid', 'senior'];
+  _ageLayer = valid.includes(layer) ? layer : null;
+}
+function getAgeLayer() { return _ageLayer; }
+
+/* ========= Context Bar ========= */
+/**
+ * renderContextBar(apps, currentAppKey)
+ * apps: [{ key, label, emoji, href }]
+ * currentAppKey: string matching one of app.key, or null (hub / index.html)
+ *
+ * Injects #contextBar into document.body if not present.
+ * Adds 'has-ctx-bar' to <body> for layout offset.
+ */
+function renderContextBar(apps, currentAppKey) {
+  let bar = document.getElementById('contextBar');
+  if (!bar) {
+    bar = document.createElement('nav');
+    bar.id = 'contextBar';
+    bar.setAttribute('aria-label', 'ניווט ראשי');
+    document.body.insertBefore(bar, document.body.firstChild);
+  }
+  document.body.classList.add('has-ctx-bar');
+
+  bar.innerHTML = '';
+
+  const homeA = document.createElement('a');
+  homeA.href = 'index.html';
+  homeA.className = 'ctx-btn' + (currentAppKey === null ? ' ctx-btn-active' : '');
+  homeA.setAttribute('aria-label', 'דף הבית');
+  homeA.textContent = '🏠';
+  bar.appendChild(homeA);
+
+  apps.forEach((app, i) => {
+    const sep = document.createElement('span');
+    sep.className = 'ctx-sep'; sep.setAttribute('aria-hidden', 'true'); sep.textContent = '|';
+    bar.appendChild(sep);
+
+    const a = document.createElement('a');
+    a.href = app.href;
+    a.className = 'ctx-btn' + (currentAppKey === app.key ? ' ctx-btn-active' : '');
+    a.innerHTML = `<span aria-hidden="true">${escapeHtml(app.emoji)}</span> ${escapeHtml(app.label)}`;
+    bar.appendChild(a);
+  });
+}
+
+function showContextBar() {
+  const b = document.getElementById('contextBar');
+  if (b) b.classList.remove('ctx-hidden');
+  document.body.classList.add('has-ctx-bar');
+}
+
+function hideContextBar() {
+  const b = document.getElementById('contextBar');
+  if (b) b.classList.add('ctx-hidden');
+  document.body.classList.remove('has-ctx-bar');
 }

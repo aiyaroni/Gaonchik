@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>yaroni studio — כלי לימוד</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="core.css">
+  <link rel="stylesheet" href="css/core.css">
   <style>
     .hub-card {
       display: flex;
@@ -40,7 +40,16 @@
     }
   </style>
 </head>
-<body class="bg-gradient-to-br from-blue-100 via-purple-50 to-green-100 min-h-screen flex flex-col items-center justify-center p-6">
+<body class="bg-gradient-to-br from-blue-100 via-purple-50 to-green-100 min-h-screen flex flex-col items-center justify-center p-6 has-ctx-bar">
+
+  <!-- Context bar (static on hub page) -->
+  <nav id="contextBar" aria-label="ניווט ראשי">
+    <a href="index.html" class="ctx-btn ctx-btn-active" aria-label="דף הבית">🏠</a>
+    <span class="ctx-sep" aria-hidden="true">|</span>
+    <a href="misparonchikV2.html" class="ctx-btn"><span aria-hidden="true">🔢</span> מספרונצ'יק</a>
+    <span class="ctx-sep" aria-hidden="true">|</span>
+    <a href="madaonchik.html" class="ctx-btn"><span aria-hidden="true">🔬</span> מדעונצ'יק</a>
+  </nav>
 
   <main class="text-center max-w-3xl w-full">
     <!-- Logo / Header -->
