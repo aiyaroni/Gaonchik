@@ -72,20 +72,8 @@
 
 <body class="bg-gradient-to-br from-blue-100 via-purple-50 to-green-100 min-h-screen flex flex-col items-center justify-center p-5 has-ctx-bar">
 
-  <!-- Navbar -->
-  <nav id="contextBar" aria-label="ניווט ראשי">
-    <a href="index.html" class="ctx-btn ctx-btn-active" aria-label="דף הבית">
-      <span aria-hidden="true">🏠</span> בית
-    </a>
-    <span class="ctx-sep" aria-hidden="true">|</span>
-    <a href="misparonchikV2.html" class="ctx-btn">
-      <span aria-hidden="true">🔢</span> מספרונצ'יק
-    </a>
-    <span class="ctx-sep" aria-hidden="true">|</span>
-    <a href="madaonchik.html" class="ctx-btn">
-      <span aria-hidden="true">🔬</span> מדעונצ'יק
-    </a>
-  </nav>
+  <!-- Navbar (populated by renderContextBar in core.js) -->
+  <nav id="contextBar" aria-label="ניווט ראשי"></nav>
 
   <!-- Main shell: max 480px, centered -->
   <main class="app-shell text-center w-full">
@@ -130,5 +118,14 @@
 
   </main>
 
+  <script src="js/core.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      renderContextBar([
+        { key:'mspr', label:"מספרונצ'יק", emoji:'🔢', href:'misparonchikV2.html' },
+        { key:'mdnc', label:"מדעונצ'יק",  emoji:'🔬', href:'madaonchik.html'     }
+      ], null); // null = hub page (home active)
+    });
+  </script>
 </body>
 </html>

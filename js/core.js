@@ -185,7 +185,6 @@ function initAudio(muteStorageKey) {
   // Update button state
   function syncBtn() {
     btn.setAttribute('aria-pressed', _isMuted ? 'true' : 'false');
-    btn.title = _isMuted ? 'הצליל כבוי' : 'הצליל פעיל';
     // Support both icon-span and text-content toggle styles
     const muted   = btn.querySelector('.muted');
     const unmuted = btn.querySelector('.unmuted');
