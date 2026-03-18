@@ -214,11 +214,16 @@ body.has-ctx-bar #floatingControls {
 }
 #audioToggle,
 #profileBtn {
-  padding: .5rem .7rem;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: .45rem .65rem;
   border-radius: 9999px;
-  background: rgba(255,255,255,.95);
+  background: rgba(255,255,255,.97);
   border: 1px solid #e5e7eb;
-  box-shadow: 0 6px 20px rgba(0,0,0,.12);
+  box-shadow: 0 4px 0 rgba(0,0,0,.10), 0 8px 20px rgba(0,0,0,.10);
   font-size: 20px;
   cursor: pointer;
 }

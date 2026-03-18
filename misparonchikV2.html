@@ -55,31 +55,31 @@
       display: inline-block;
       background: #eff6ff;
       border: 2px solid #bfdbfe;
-      border-radius: 1.25rem;
-      padding: .45rem 1.1rem;
+      border-radius: 1rem;
+      padding: .3rem .85rem;
       font-weight: 700;
-      font-size: .92rem;
+      font-size: .88rem;
       color: #1d4ed8;
-      margin-top: .4rem;
-      max-width: 260px;
-      text-align: center;
+      margin-top: .25rem;
+      white-space: nowrap;
+      line-height: 1.5;
     }
     .shoppy-speech::before {
       content: '';
       position: absolute;
-      top: -11px;
+      top: -10px;
       left: 50%;
       transform: translateX(-50%);
-      border: 6px solid transparent;
+      border: 5px solid transparent;
       border-bottom-color: #bfdbfe;
     }
     .shoppy-speech::after {
       content: '';
       position: absolute;
-      top: -7px;
+      top: -6px;
       left: 50%;
       transform: translateX(-50%);
-      border: 5px solid transparent;
+      border: 4px solid transparent;
       border-bottom-color: #eff6ff;
     }
 
@@ -118,29 +118,43 @@
       justify-content: flex-start;
       align-items: center;
       text-align: right;
-      gap: .875rem;
-      min-height: 68px;
-      padding: .8rem 1.1rem;
+      gap: .75rem;
+      min-height: 64px;
+      padding: .75rem 1rem;
+      transition: transform .12s, box-shadow .12s;
+    }
+    /* 3D btn-duo style per tint — pastel bg + colored bottom shadow */
+    #curriculumGrid .choice-card[data-tint="blue"]   { background: #eff6ff; box-shadow: 0 4px 0 #93c5fd; }
+    #curriculumGrid .choice-card[data-tint="green"]  { background: #f0fdf4; box-shadow: 0 4px 0 #86efac; }
+    #curriculumGrid .choice-card[data-tint="purple"] { background: #faf5ff; box-shadow: 0 4px 0 #d8b4fe; }
+    #curriculumGrid .choice-card[data-tint="orange"] { background: #fffbeb; box-shadow: 0 4px 0 #fcd34d; }
+    /* Press-down on active */
+    #curriculumGrid .choice-card:active              { transform: translateY(3px); }
+    #curriculumGrid .choice-card[data-tint="blue"]:active   { box-shadow: 0 1px 0 #93c5fd; }
+    #curriculumGrid .choice-card[data-tint="green"]:active  { box-shadow: 0 1px 0 #86efac; }
+    #curriculumGrid .choice-card[data-tint="purple"]:active { box-shadow: 0 1px 0 #d8b4fe; }
+    #curriculumGrid .choice-card[data-tint="orange"]:active { box-shadow: 0 1px 0 #fcd34d; }
+    /* Selected: blue border + blue 3D shadow */
+    #curriculumGrid .choice-card.selected {
+      border-color: #2563eb;
+      box-shadow: 0 4px 0 #1d4ed8 !important;
+      transform: none;
     }
     .station-icon {
       flex-shrink: 0;
-      width: 46px;
-      height: 46px;
+      width: 42px;
+      height: 42px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.55rem;
-      background: #f3f4f6;
+      font-size: 1.45rem;
+      background: rgba(255,255,255,.7);
     }
-    #curriculumGrid .choice-card[data-tint="green"]  .station-icon { background: #dcfce7; }
-    #curriculumGrid .choice-card[data-tint="blue"]   .station-icon { background: #dbeafe; }
-    #curriculumGrid .choice-card[data-tint="purple"] .station-icon { background: #f3e8ff; }
-    #curriculumGrid .choice-card[data-tint="orange"] .station-icon { background: #fef3c7; }
-    /* Mobile: slightly smaller icon to give text more room */
+    /* Mobile: slightly smaller icon */
     @media (max-width: 400px) {
-      .station-icon { width: 38px; height: 38px; font-size: 1.25rem; }
-      #curriculumGrid .choice-card { gap: .6rem; padding: .7rem .9rem; min-height: 60px; }
+      .station-icon { width: 36px; height: 36px; font-size: 1.2rem; }
+      #curriculumGrid .choice-card { gap: .5rem; padding: .65rem .8rem; min-height: 58px; }
     }
   </style>
 </head>
@@ -183,7 +197,7 @@
       <div id="nameError" class="hidden bg-red-50 border-2 border-red-200 text-red-600 font-bold rounded-2xl px-4 py-3 mb-3 text-base" role="alert">
         שופי מחכה לשם שלך 😊
       </div>
-      <input type="text" id="playerName" name="playerName" placeholder="הכנס את שמך כאן" autocomplete="given-name" class="w-full p-4 text-xl border-2 border-gray-300 rounded-xl mb-3 text-center focus:border-blue-500 focus:outline-none">
+      <input type="text" id="playerName" name="playerName" placeholder="הכנס את שמך כאן" autocomplete="given-name" class="w-full p-3 text-lg border-2 border-gray-300 rounded-xl mb-3 text-center focus:border-blue-500 focus:outline-none" style="height:48px;line-height:1.2">
       <div class="text-center mb-5">
         <button type="button" id="profileOrSwitchBtn" class="link-cta">החלף משתמש / אזור אישי</button>
       </div>
@@ -239,8 +253,8 @@
             <span class="accent" aria-hidden="true"></span>
             <div class="station-icon">🎯</div>
             <div class="flex-1 text-right">
-              <div class="text-lg font-bold text-gray-800">ללא תוכנית</div>
-              <div class="text-sm text-gray-500">בחירה חופשית</div>
+              <div class="text-base font-bold text-gray-800">חופשי</div>
+              <div class="text-xs text-gray-500">ללא תוכנית מוגדרת</div>
             </div>
           </button>
 
@@ -250,8 +264,8 @@
             <span class="accent" aria-hidden="true"></span>
             <div class="station-icon">🌱</div>
             <div class="flex-1 text-right">
-              <div class="text-lg font-bold text-gray-800">כיתה א׳, מחצית א׳</div>
-              <div class="text-sm text-gray-500">עד 10</div>
+              <div class="text-base font-bold text-gray-800">כיתה א׳ — חצי א</div>
+              <div class="text-xs text-gray-500">חיבור וחיסור עד 10</div>
             </div>
           </button>
 
@@ -261,8 +275,8 @@
             <span class="accent" aria-hidden="true"></span>
             <div class="station-icon">🌿</div>
             <div class="flex-1 text-right">
-              <div class="text-lg font-bold text-gray-800">כיתה א׳, מחצית ב׳</div>
-              <div class="text-sm text-gray-500">עד 20</div>
+              <div class="text-base font-bold text-gray-800">כיתה א׳ — חצי ב</div>
+              <div class="text-xs text-gray-500">חיבור וחיסור עד 20</div>
             </div>
           </button>
 
@@ -272,8 +286,8 @@
             <span class="accent" aria-hidden="true"></span>
             <div class="station-icon">✨</div>
             <div class="flex-1 text-right">
-              <div class="text-lg font-bold text-gray-800">כיתה א׳, אתגר</div>
-              <div class="text-sm text-gray-500">עד 30</div>
+              <div class="text-base font-bold text-gray-800">כיתה א׳ — אתגר</div>
+              <div class="text-xs text-gray-500">חיבור וחיסור עד 30</div>
             </div>
           </button>
 
@@ -283,8 +297,8 @@
             <span class="accent" aria-hidden="true"></span>
             <div class="station-icon">🧩</div>
             <div class="flex-1 text-right">
-              <div class="text-lg font-bold text-gray-800">כיתה ב׳</div>
-              <div class="text-sm text-gray-500">עד 100</div>
+              <div class="text-base font-bold text-gray-800">כיתה ב׳</div>
+              <div class="text-xs text-gray-500">חיבור וחיסור עד 100</div>
             </div>
           </button>
 
@@ -294,8 +308,8 @@
             <span class="accent" aria-hidden="true"></span>
             <div class="station-icon">✖️</div>
             <div class="flex-1 text-right">
-              <div class="text-lg font-bold text-gray-800">כיתה ג׳</div>
-              <div class="text-sm text-gray-500">עד 100; כפל/חילוק 10×10</div>
+              <div class="text-base font-bold text-gray-800">כיתה ג׳</div>
+              <div class="text-xs text-gray-500">× ÷ עד 100 · לוח 10×10</div>
             </div>
           </button>
 
@@ -305,8 +319,8 @@
             <span class="accent" aria-hidden="true"></span>
             <div class="station-icon">🚀</div>
             <div class="flex-1 text-right">
-              <div class="text-lg font-bold text-gray-800">כיתה ד׳</div>
-              <div class="text-sm text-gray-500">עד 1,000; כפל/חילוק 12×12</div>
+              <div class="text-base font-bold text-gray-800">כיתה ד׳</div>
+              <div class="text-xs text-gray-500">× ÷ עד 1,000 · לוח 12×12</div>
             </div>
           </button>
 
